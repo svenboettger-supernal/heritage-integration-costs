@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Integration Cost Analysis for Heritage AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,400..600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --font-serif:'Source Serif 4',Georgia,'Times New Roman',serif;
+    --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+    --font-mono:'JetBrains Mono','SF Mono',ui-monospace,monospace;
+
+    --bg:#F5F8FC;                            /* page near-white, brand --page */
+    --card:#FFFFFF;                          /* surface white */
+    --surface-2:#E8EEF6;                     /* tinted blue panel, brand --surface-2 */
+    --border:#E1E7EF;                        /* cool gray-blue hairline, brand --rule */
+    --border-soft:#EEF2F8;                   /* brand --rule-soft */
+    --border-strong:hsl(218 27% 14% / .2);
+    --placeholder:hsl(220 9% 60%);
+    --muted-fg:#5C6573;                      /* brand --muted */
+    --fg:#1B2230;                            /* ink */
+    --navy:#0F1E36;                          /* Heritage Navy, brand --navy */
+    --navy-deep:#0A1628;                     /* brand --navy-deep */
+    --bronze:#8C7351;                        /* hairlines + eyebrows only */
+    --blue:#2C5282;                          /* Reserved Blue, state only */
+    --blue-deep:hsl(214 50% 28%);
+    --cream:#F4F0E6;                         /* quote text on navy inset */
+    --on-dark:#FFFFFF;
+    --on-dark-muted:#B0BCD0;
+    --succ-bg:hsl(150 30% 94%); --succ-fg:hsl(150 50% 22%); --succ-bd:hsl(150 30% 70%);
+    --warn-bg:hsl(46 50% 92%);  --warn-fg:hsl(46 60% 24%);  --warn-bd:hsl(46 50% 70%);
+    --err-bg:hsl(0 40% 94%);   --err-fg:hsl(0 60% 28%);   --err-bd:hsl(0 40% 70%);
+    --info-bg:hsl(214 50% 94%); --info-fg:hsl(214 50% 28%); --info-bd:hsl(214 50% 70%);
+    --int:hsl(220 38% 35%);  --int-fg:hsl(220 38% 28%);  --int-tint:hsl(220 38% 94%);  --int-bd:hsl(220 38% 80%);
+    --ext:hsl(35 26% 55%);   --ext-fg:hsl(35 32% 30%);   --ext-tint:hsl(35 26% 94%);   --ext-bd:hsl(35 26% 76%);
+    --firm:hsl(140 18% 38%); --firm-fg:hsl(140 24% 24%); --firm-tint:hsl(140 18% 94%); --firm-bd:hsl(140 18% 74%);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+  body{background:var(--bg); color:var(--fg); font-family:var(--font-sans); font-size:16px; line-height:1.6; margin:0;
+    border-top:1px solid var(--bronze); border-bottom:1px solid var(--bronze);
+    font-variant-numeric:tabular-nums; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility}
+  .wrap{max-width:1160px; margin:0 auto; padding:0 32px}
+  .mono{font-family:var(--font-mono); font-variant-numeric:tabular-nums}
+  .meta{font-size:13px; color:var(--muted-fg)}
+
+  /* ---------- top nav (brand nav treatment: solid white, hairline, uppercase navy links) ---------- */
+  .nav{position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between; gap:24px;
+    height:64px; padding:0 32px; background:#FFFFFF; border-bottom:1px solid var(--border)}
+  .nav__title{font-family:var(--font-serif); font-variation-settings:"opsz" 24; font-weight:500; font-size:17px; color:var(--navy); text-decoration:none; white-space:nowrap}
+  .nav__links{display:flex; align-items:center; gap:clamp(16px, 2.6vw, 32px)}
+  .nav__links a{font-weight:500; font-size:12px; line-height:1; letter-spacing:.14em; text-transform:uppercase; color:var(--navy); text-decoration:none; padding:7px 0; transition:opacity .18s ease-out, color .18s ease-out}
+  .nav__links a:hover{opacity:.55}
+  .nav__links a.current{color:var(--blue)}
+  @media(max-width:720px){.nav__links{display:none} .nav{padding:0 20px}}
+
+  section[id]{scroll-margin-top:84px}
+
+  /* ---------- masthead (document anatomy: logo, meta line, eyebrow, serif h1) ---------- */
+  .masthead{padding:56px 0 40px; border-bottom:1px solid var(--bronze)}
+  .masthead-top{display:flex; align-items:center; justify-content:space-between; gap:24px; margin-bottom:40px; flex-wrap:wrap}
+  .masthead-top img{height:40px; width:auto; display:block}
+  .masthead-meta{font-size:13px; font-weight:500; color:var(--muted-fg); letter-spacing:.02em}
+  .masthead-meta .mono{font-size:13px; text-transform:uppercase}
+  h1{font-family:var(--font-serif); font-variation-settings:"opsz" 60; font-weight:400; font-size:clamp(36px, 5vw, 52px); line-height:1.08; color:var(--navy); margin:0 0 14px}
+  .masthead .sub{font-size:18px; line-height:1.6; color:var(--muted-fg); max-width:78ch; margin:0 0 16px}
+  .masthead .note{font-size:12.5px; color:var(--placeholder); margin:0}
+
+  /* ---------- sections ---------- */
+  .section{padding:64px 0 0}
+  .section:last-of-type{padding-bottom:88px}
+  .eyebrow{margin:0 0 10px; font-size:12px; font-weight:500; letter-spacing:.22em; text-transform:uppercase; color:var(--bronze)}
+  h2{font-family:var(--font-serif); font-variation-settings:"opsz" 60; font-weight:400; font-size:32px; line-height:1.2; color:var(--navy); margin:0 0 12px}
+  h3{font-weight:500; font-size:18px; line-height:1.3; margin:0 0 6px}
+  h4{font-weight:500; font-size:15px; margin:0 0 4px}
+  .intro{max-width:70ch; margin:0 0 30px; font-size:16px; line-height:1.65; color:var(--muted-fg)}
+  p{margin:0 0 12px; max-width:74ch}
+  a.inline{color:var(--navy); text-decoration:none; border-bottom:1px solid var(--border); transition:border-color .15s}
+  a.inline:hover{border-color:var(--navy)}
+
+  /* ---------- cards / grids ---------- */
+  .card{background:var(--card); border:1px solid var(--border); border-radius:0; padding:28px}
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:18px}
+  .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:18px}
+  @media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+  .stat{padding:22px 24px}
+  .stat .num{font-family:var(--font-serif); font-variation-settings:"opsz" 60; font-size:32px; font-weight:400; line-height:1.1; color:var(--navy); font-variant-numeric:tabular-nums}
+  .stat .lbl{font-size:13px; color:var(--muted-fg); margin-top:8px; line-height:1.5}
+
+  /* dimension cards */
+  .dims{display:grid; grid-template-columns:repeat(3,1fr); gap:16px}
+  @media(max-width:900px){.dims{grid-template-columns:1fr}}
+  .dim{border-radius:0; padding:22px; border:1px solid var(--border)}
+  .dim.int{background:var(--int-tint); border-color:var(--int-bd)}
+  .dim.ext{background:var(--ext-tint); border-color:var(--ext-bd)}
+  .dim.firm{background:var(--firm-tint); border-color:var(--firm-bd)}
+  .dim .k{font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:600; display:flex; align-items:center; gap:7px}
+  .dim.int .k{color:var(--int-fg)}
+  .dim.ext .k{color:var(--ext-fg)}
+  .dim.firm .k{color:var(--firm-fg)}
+  .dim .who{font-size:12px; color:var(--muted-fg); margin:6px 0 0}
+  .dim h3{margin:14px 0 4px; font-size:16px}
+  .dim .big{font-family:var(--font-serif); font-variation-settings:"opsz" 60; font-size:24px; font-weight:400; color:var(--navy); margin:2px 0 8px}
+  .dim .d{font-size:13px; line-height:1.55; color:var(--muted-fg)}
+
+  /* badges (brand badge treatment: pill, uppercase, status dot) */
+  .badge{display:inline-flex; align-items:center; gap:7px; border-radius:9999px; padding:4px 11px; font-size:11px; font-weight:500; letter-spacing:.08em; text-transform:uppercase; line-height:1.3; white-space:nowrap}
+  .badge::before{content:""; width:5px; height:5px; border-radius:50%; background:currentColor; flex:0 0 auto}
+  .b-low{background:var(--succ-bg); color:var(--succ-fg); border:1px solid var(--succ-bd)}
+  .b-med{background:var(--warn-bg); color:var(--warn-fg); border:1px solid var(--warn-bd)}
+  .b-high{background:var(--err-bg); color:var(--err-fg); border:1px solid var(--err-bd)}
+  .b-free{background:var(--succ-bg); color:var(--succ-fg); border:1px solid var(--succ-bd)}
+  .b-rec{background:var(--err-bg); color:var(--err-fg); border:1px solid var(--err-bd)}
+  .b-neg{background:var(--info-bg); color:var(--info-fg); border:1px solid var(--info-bd)}
+
+  .dot{width:8px;height:8px;border-radius:9999px;display:inline-block;flex:0 0 auto}
+  .dot.int{background:var(--int)} .dot.ext{background:var(--ext)} .dot.firm{background:var(--firm)}
+
+  /* ---------- filter panel ---------- */
+  .filters{display:flex; flex-wrap:wrap; align-items:flex-start; gap:18px 30px; padding:18px 20px; margin:4px 0 26px;
+    background:var(--card); border:1px solid var(--border); border-radius:0}
+  .fgroup{display:flex; flex-direction:column; gap:8px}
+  .flabel{font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted-fg); display:flex; align-items:center; gap:7px}
+  .chips{display:flex; flex-wrap:wrap; gap:6px}
+  .chip{font-size:12.5px; font-weight:500; line-height:1; color:var(--muted-fg); background:transparent; border:1px solid var(--border);
+    border-radius:3px; padding:6px 12px; cursor:pointer; font-family:inherit; transition:background-color .15s, color .15s, border-color .15s}
+  .chip:hover{color:var(--fg); background:var(--surface-2); border-color:var(--border-strong)}
+  .chip.active{color:#fff; background:var(--blue); border-color:var(--blue)}
+  .chip.active:hover{color:#fff; background:var(--blue-deep); border-color:var(--blue-deep)}
+  .chip:focus-visible{outline:2px solid var(--blue); outline-offset:2px}
+  .fcount{margin:0 0 0 auto; align-self:flex-end; font-size:12.5px; color:var(--placeholder)}
+  .fcount b{font-family:var(--font-mono); font-weight:500; color:var(--fg)}
+  @media(max-width:640px){.fcount{margin-left:0; align-self:flex-start}}
+
+  /* ---------- integration cards ---------- */
+  #grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:18px; align-items:stretch}
+  .tool{display:flex; flex-direction:column; gap:12px; padding:20px 22px; background:var(--card); border:1px solid var(--border); border-radius:0; cursor:pointer; transition:border-color .15s, box-shadow .15s}
+  .tool:hover{border-color:var(--border-strong); box-shadow:0 8px 24px -8px hsl(218 27% 14% / .12)}
+  .tool .head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px}
+  .tool .name{font-family:var(--font-serif); font-variation-settings:"opsz" 32; font-weight:500; font-size:19px; line-height:1.2; color:var(--navy)}
+  .cat-tag{flex:none; font-size:11px; font-weight:500; letter-spacing:.02em; padding:3px 9px; border-radius:4px; white-space:nowrap}
+  .tool .desc{font-size:13.5px; line-height:1.55; color:var(--muted-fg); margin:0; flex:1}
+  .costblock{margin-top:auto; padding-top:6px}
+  .cost-row{display:flex; align-items:center; gap:10px; padding:7px 0; border-top:1px solid var(--border)}
+  .cost-row .lbl{display:flex; align-items:center; gap:7px; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted-fg); white-space:nowrap}
+  .cost-row .right{margin-left:auto; display:flex; align-items:center; gap:8px}
+  .cost-row .v{font-family:var(--font-mono); font-size:12.5px; font-weight:500; color:var(--fg)}
+
+  /* ---------- modal ---------- */
+  .overlay{position:fixed; inset:0; background:hsl(218 27% 14% / .45); display:none; align-items:flex-start; justify-content:center; padding:48px 20px; z-index:200; overflow-y:auto}
+  .overlay.open{display:flex}
+  .modal{background:var(--card); border:1px solid var(--border); border-radius:0; max-width:720px; width:100%; padding:32px; box-shadow:0 24px 60px -12px hsl(218 27% 14% / .28)}
+  .modal .mhead{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:4px}
+  .modal h3{font-family:var(--font-serif); font-variation-settings:"opsz" 40; font-weight:400; font-size:24px; color:var(--navy)}
+  .closeb{cursor:pointer; border:1px solid var(--border); background:var(--card); border-radius:3px; height:34px; width:34px; font-size:18px; line-height:1; color:var(--muted-fg); flex:0 0 auto; transition:background-color .15s}
+  .closeb:hover{background:var(--surface-2)}
+  .closeb:focus-visible{outline:2px solid var(--blue); outline-offset:2px}
+  .costcards{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:18px 0 6px}
+  @media(max-width:640px){.costcards{grid-template-columns:1fr}}
+  .ccard{border-radius:0; padding:14px 15px; border:1px solid var(--border)}
+  .ccard.int{background:var(--int-tint); border-color:var(--int-bd)}
+  .ccard.ext{background:var(--ext-tint); border-color:var(--ext-bd)}
+  .ccard.firm{background:var(--firm-tint); border-color:var(--firm-bd)}
+  .ccard .lab{font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; color:var(--muted-fg); display:flex; align-items:center; gap:6px}
+  .ccard.int .lab{color:var(--int-fg)} .ccard.ext .lab{color:var(--ext-fg)} .ccard.firm .lab{color:var(--firm-fg)}
+  .ccard .who{font-size:10.5px; color:var(--placeholder); margin-top:3px}
+  .ccard .val{font-size:14px; font-weight:600; margin-top:7px}
+  .ccard .sub{font-size:12px; color:var(--muted-fg); margin-top:7px; line-height:1.5}
+  .drow{display:grid; grid-template-columns:120px 1fr; gap:6px 18px; padding:13px 0; border-bottom:1px solid var(--border); font-size:14px}
+  .drow:last-of-type{border-bottom:0}
+  .drow .dk{font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--placeholder); padding-top:1px}
+  .src{display:block; font-size:13px; margin-top:3px}
+  .src a{color:var(--navy); text-decoration:none; border-bottom:1px solid var(--border)}
+  .src a:hover{border-color:var(--navy)}
+  @media(max-width:560px){.drow{grid-template-columns:1fr; gap:2px 0}}
+
+  /* ---------- tables ---------- */
+  table{width:100%; border-collapse:collapse; font-size:14px; margin-top:10px; font-variant-numeric:tabular-nums}
+  th,td{text-align:left; padding:12px 13px; border-bottom:1px solid var(--border); vertical-align:top}
+  th{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted-fg); font-weight:600}
+  tbody tr:hover{background:var(--border-soft)}
+  .totrow td{font-weight:600; color:var(--navy); border-top:1px solid var(--bronze); border-bottom:0; background:var(--surface-2)}
+  .num-cell{font-family:var(--font-mono); font-size:13px; white-space:nowrap}
+
+  ul.tight{margin:6px 0 0; padding-left:20px; max-width:74ch}
+  ul.tight li{margin:7px 0; font-size:14px; line-height:1.55}
+  ul.tight li::marker{color:var(--bronze)}
+  /* ---------- navy contrast inset (one per page) ---------- */
+  .inset{background:var(--navy); padding:clamp(36px, 4.5vw, 52px) clamp(24px, 4vw, 48px); margin:32px 0 0}
+  .inset__hairline{width:48px; height:1px; background:var(--bronze); margin:0 0 24px}
+  .inset p.quote{font-family:var(--font-serif); font-variation-settings:"opsz" 40; font-weight:400; font-size:clamp(19px, 2vw, 24px); line-height:1.5; letter-spacing:-.005em; color:var(--cream); margin:0; max-width:46em}
+  .inset p.attr{margin:24px 0 0; font-size:12px; font-weight:500; letter-spacing:.16em; text-transform:uppercase; color:var(--on-dark-muted); max-width:none}
+
+  .legend{display:flex; gap:18px; flex-wrap:wrap; font-size:13px; color:var(--muted-fg); margin-top:18px}
+  .legend span{display:flex; align-items:center; gap:7px}
+
+  /* ---------- footer ---------- */
+  footer{margin-top:0; padding:36px 0 56px; border-top:1px solid var(--bronze)}
+  .footer-inner{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap}
+  .footer-inner img{height:32px; width:auto; opacity:.9}
+  .footer-inner p{font-size:13px; color:var(--muted-fg); margin:0; max-width:none}
+  @media print{body{background:#fff} .tool,.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<span id="top"></span>
+
+<header class="nav">
+  <a class="nav__title" href="#top">Integration Cost Analysis</a>
+  <nav class="nav__links" aria-label="Sections">
+    <a href="#summary">Executive Summary</a>
+    <a href="#rollout">Rollout Plan</a>
+    <a href="#integrations">Integrations</a>
+    <a href="#breakdown">Cost Breakdown</a>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="masthead-top">
+      <img src="data:image/webp;base64,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" alt="Heritage Strategies LLC">
+      <div class="masthead-meta">Prepared by Supernal for Heritage AI · <span class="mono">2026-06-10</span></div>
+    </div>
+    <p class="eyebrow">Heritage AI · Capital Planning Input · Current Raise</p>
+    <h1>Integration Cost Analysis</h1>
+    <p class="sub">One question drives this document: on top of the signed Supernal contract, how much extra would Heritage AI spend to offer a Wealth.com-grade integration suite? Short answer for the raise: a <strong>$150K buffer</strong> funds the demand-driven rollout discussed on the Jun 10 sync. Only a day-one parity strategy would justify raising the full ceiling of roughly <strong>$600K</strong>.</p>
+    <p class="note">Preliminary estimates for capital planning. All dollar figures in USD. Confidential to the Heritage working group.</p>
+  </header>
+
+  <!-- ===================== EXECUTIVE SUMMARY ===================== -->
+  <section class="section" id="summary">
+    <p class="eyebrow">Executive Summary</p>
+    <h2>Raise a $150K buffer. $600K is the ceiling, not the plan.</h2>
+    <p class="intro">Heritage AI is sizing its raise this week, so the integration question becomes a capital question: how much extra to raise on top of the signed Supernal contract. Two scenarios bound the answer. The demand-driven rollout discussed on the Jun 10 sync needs about $70K to $145K one-time for the first wave. Building all 20 integrations for day-one Wealth.com parity would cost about $375K to $540K one-time plus $13K to $44K per year in vendor fees, about $585K in year one at the top of the ranges. We use $600K as the round planning ceiling.</p>
+
+    <div class="grid-2" style="margin-bottom:32px">
+      <div class="card">
+        <p class="eyebrow" style="margin-bottom:8px">Scenario A · The plan</p>
+        <h3>Demand-driven rollout</h3>
+        <div style="font-family:var(--font-serif);font-variation-settings:'opsz' 60;font-size:32px;font-weight:400;line-height:1.1;color:var(--navy);margin:8px 0 10px">~$70-145K <span class="meta" style="font-size:13px">one-time</span></div>
+        <p style="font-size:14px;color:var(--muted-fg);margin-bottom:0">Our suggested first wave: foundation and quick wins at about $55K to $70K, plus the first one or two connectors Ridgeback asks for at about $15K to $75K. Near $0 recurring until a data vendor such as Yodlee is switched on. <strong>Recommended raise buffer: $150K.</strong></p>
+      </div>
+      <div class="card">
+        <p class="eyebrow" style="margin-bottom:8px">Scenario B · The ceiling</p>
+        <h3>Day-one Wealth.com parity</h3>
+        <div style="font-family:var(--font-serif);font-variation-settings:'opsz' 60;font-size:32px;font-weight:400;line-height:1.1;color:var(--navy);margin:8px 0 10px">~$600K <span class="meta" style="font-size:13px">year one</span></div>
+        <p style="font-size:14px;color:var(--muted-fg);margin-bottom:0">All 20 connectors at $375K to $540K one-time, plus $13K to $44K per year in vendor fees. Heritage signaled on the Jun 10 sync that this is unlikely to be the plan. We show it so the raise is sized with the full number visible.</p>
+      </div>
+    </div>
+
+    <h2 style="margin-top:22px">Three payers, three distinct costs</h2>
+    <p class="intro">The question resolves once the cost is split by who pays. Only the first two, the Supernal build and the vendor fees, belong in Heritage's raise math. The third is the client firm's spend, and the Jun 10 sync confirmed Heritage will not subsidize it.</p>
+
+    <div class="dims">
+      <div class="dim int">
+        <div class="k"><span class="dot int"></span> 01 · Supernal</div>
+        <p class="who">One-time build, paid by Heritage to Supernal</p>
+        <h3>Build effort</h3>
+        <div class="big mono">~50-72 pts</div>
+        <p class="d">About $375K to $540K one-time to build all 20 connectors, near $450K at the midpoint. Controllable, predictable, and the only large number in the raise math. Counts toward the raise.</p>
+      </div>
+      <div class="dim ext">
+        <div class="k"><span class="dot ext"></span> 02 · Heritage AI</div>
+        <p class="who">Recurring API fees, paid by Heritage to vendors</p>
+        <h3>Vendor API access</h3>
+        <div class="big mono">~$13-44K / yr</div>
+        <p class="d">Concentrated almost entirely in two data feeds: Yodlee and an AVM property-data vendor. For 12 of the 20, Heritage pays the vendor nothing. Counts toward the raise, but only once those vendors are switched on.</p>
+      </div>
+      <div class="dim firm">
+        <div class="k"><span class="dot firm"></span> 03 · Client firm</div>
+        <p class="who">License fees, paid by the advisory firm</p>
+        <h3>Underlying license</h3>
+        <div class="big mono">$0 to $65K / yr</div>
+        <p class="d">Per integration, for a small firm. Not Heritage's cost, and excluded from the raise math. Confirmed Jun 10: if a firm's plan lacks API access, the upgrade is the firm's spend. 8 of the 20 are free to the firm.</p>
+      </div>
+    </div>
+
+    <div class="inset">
+      <div class="inset__hairline" aria-hidden="true"></div>
+      <p class="quote">The raise decision in one line: the demand-driven plan needs roughly a $150K integration buffer, and only a day-one parity strategy would justify raising the full $600K. Money raised now can sit until a client demands a connector, so the low-risk move is to hold the buffer now and spend on demand.</p>
+      <p class="attr">Supernal recommendation · Following the Jun 10 weekly sync</p>
+    </div>
+
+    <div class="grid-3" style="margin-top:18px">
+      <div class="card stat"><div class="num">12 of 20</div><div class="lbl"><span class="dot ext"></span> cost Heritage $0 per year. API access rides existing subscriptions and relationships.</div></div>
+      <div class="card stat"><div class="num">8 of 20</div><div class="lbl"><span class="dot firm"></span> cost the client firm nothing: login, custody, crypto, Carta, and the data vendors Heritage funds.</div></div>
+      <div class="card stat"><div class="num">Addepar</div><div class="lbl">Most expensive to adopt, at roughly $50K to $65K per year for the client firm. Heritage's own cost there is likely $0, with $30K per year as the worst case.</div></div>
+    </div>
+  </section>
+
+  <!-- ===================== ROLLOUT PLAN ===================== -->
+  <section class="section" id="rollout">
+    <p class="eyebrow">Rollout Plan</p>
+    <h2>Demand-driven, funded by licensing revenue</h2>
+    <p class="intro">The direction set on the Jun 10 weekly sync. Four rules govern how integrations get added, and together they keep the upfront spend at the buffer level rather than the ceiling.</p>
+    <div class="grid-2">
+      <div class="card">
+        <h3>1 · Integrations ship inside the subscription</h3>
+        <p style="font-size:14px;color:var(--muted-fg);margin-bottom:0">The pricing target: firms pay one platform price, with no per-integration fee. The build cost sits with Heritage AI, and that build cost is what this document prices.</p>
+      </div>
+      <div class="card">
+        <h3>2 · Underlying licenses stay the firm's cost</h3>
+        <p style="font-size:14px;color:var(--muted-fg);margin-bottom:0">Heritage does not buy or upgrade a firm's Salesforce, Addepar, or eMoney. If a firm's plan lacks API access, the upgrade is the firm's spend. Confirmed Jun 10.</p>
+      </div>
+      <div class="card">
+        <h3>3 · Sequence follows commercial demand</h3>
+        <p style="font-size:14px;color:var(--muted-fg);margin-bottom:0">Ridgeback is the first commercial client and picks the first one or two connectors. Each later client that demands a connector brings licensing revenue that funds the build. A large RIA that wants Addepar pays for its own Addepar license; the connector ships free inside the subscription, funded by that client's licensing revenue.</p>
+      </div>
+      <div class="card">
+        <h3>4 · Advertise ahead of the build</h3>
+        <p style="font-size:14px;color:var(--muted-fg);margin-bottom:0">List connectors before they are built. Most here are 1 to 5 point builds, deliverable in weeks once a client commits, which fits inside a normal onboarding window. The gated group (Addepar, Carta, Schwab, Goldman, Jump) needs months of partner approvals, so any of these that matter commercially should start early.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== INTEGRATIONS ===================== -->
+  <section class="section" id="integrations">
+    <p class="eyebrow">Integrations</p>
+    <h2>The 20 integrations</h2>
+    <p class="intro">These 20 are the connectors Wealth.com offers today, used here as a sizing benchmark rather than a committed Heritage roadmap; the actual sequence follows client demand per the rollout plan. Each card shows all three costs: Supernal build, Heritage vendor fee, and client firm license. Filter below, then select any card for the full breakdown and sources.</p>
+
+    <div class="filters">
+      <div class="fgroup">
+        <span class="flabel">Category</span>
+        <div class="chips" id="catChips"></div>
+      </div>
+      <div class="fgroup">
+        <span class="flabel"><span class="dot int"></span> Supernal build</span>
+        <div class="chips" id="effChips">
+          <button class="chip active" data-eff="all">All</button>
+          <button class="chip" data-eff="Low">Low</button>
+          <button class="chip" data-eff="Medium">Medium</button>
+          <button class="chip" data-eff="High">High</button>
+        </div>
+      </div>
+      <div class="fgroup">
+        <span class="flabel"><span class="dot ext"></span> Heritage cost</span>
+        <div class="chips" id="costChips">
+          <button class="chip active" data-cost="all">All</button>
+          <button class="chip" data-cost="Free">Free</button>
+          <button class="chip" data-cost="Recurring">Recurring</button>
+          <button class="chip" data-cost="Negotiated">Negotiated</button>
+        </div>
+      </div>
+      <div class="fgroup">
+        <span class="flabel"><span class="dot firm"></span> Client firm cost</span>
+        <div class="chips" id="firmChips">
+          <button class="chip active" data-firm="all">All</button>
+          <button class="chip" data-firm="Free">$0</button>
+          <button class="chip" data-firm="Low">Under $10K</button>
+          <button class="chip" data-firm="High">$10K+</button>
+        </div>
+      </div>
+      <p class="fcount">Showing <b id="count">20</b> of 20</p>
+    </div>
+
+    <div id="grid"></div>
+  </section>
+
+  <!-- ===================== COST BREAKDOWN ===================== -->
+  <section class="section" id="breakdown">
+    <p class="eyebrow">Cost Breakdown</p>
+    <h2>Heritage's budget: build plus vendor fees, phased</h2>
+    <p class="intro">These are the two costs Heritage actually pays, sequenced by build effort and access barrier. Under the demand-driven plan the phases are a menu, not a schedule: the total row prices the full-parity ceiling. The client-license dimension has its own table below, as it is not Heritage's spend.</p>
+    <table>
+      <thead><tr><th>Phase</th><th>Integrations</th><th><span class="dot int"></span> Supernal build</th><th><span class="dot ext"></span> Heritage to vendor / yr</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>1 · Foundation and quick wins</strong></td>
+          <td>Google, Entra ID, Coinbase, Wealthbox, Redtail</td>
+          <td class="num-cell">~7-9 pts<br><span class="meta">~$55-70K</span></td>
+          <td class="num-cell">~$0<br><span class="meta">+$1K one-time if Coinbase Prime</span></td>
+        </tr>
+        <tr>
+          <td><strong>2 · Core wealth data</strong></td>
+          <td>Orion, Black Diamond, Advyzon, Zocks, eMoney, Arch</td>
+          <td class="num-cell">~15-19 pts<br><span class="meta">~$115-145K</span></td>
+          <td class="num-cell">~$0 expected<br><span class="meta">Zocks API, eMoney, Arch negotiated</span></td>
+        </tr>
+        <tr>
+          <td><strong>3 · Gated and data-vendor</strong></td>
+          <td>Addepar, Schwab, Goldman, Salesforce, Dynamics, Carta, Jump, Yodlee, Zillow to AVM</td>
+          <td class="num-cell">~28-44 pts<br><span class="meta">~$210-330K</span></td>
+          <td class="num-cell">~$13-44K<br><span class="meta">Yodlee $12-40K, AVM $0.5-4K</span></td>
+        </tr>
+        <tr class="totrow">
+          <td>All 20</td>
+          <td>Full Wealth.com parity</td>
+          <td class="num-cell">~50-72 pts<br>~$375-540K one-time</td>
+          <td class="num-cell">~$13-44K / yr<br>plus negotiated terms</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 style="margin-top:54px">What the client firm pays to adopt each integration</h2>
+    <p class="intro">This is not Heritage's cost. It is the license the advisory firm already holds, or must buy, for the data to exist. It is the adoption lens: cheap or free integrations are easy for clients to switch on, while the per-AUM platforms (Addepar, Black Diamond) and Financial Services Cloud are heavy. Modeled for a small firm of about 5 users and $250M AUM.</p>
+    <table>
+      <thead><tr><th>Integration</th><th>Pricing model</th><th><span class="dot firm"></span> Small firm / yr</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Addepar</strong></td><td>~1.2 to 1.5 bps of AUM, ~$50K minimum</td><td class="num-cell">~$50-65K</td><td>Priciest to adopt; the minimum dominates at small AUM</td></tr>
+        <tr><td><strong>SS&amp;C Black Diamond</strong></td><td>~1 bps of AUM</td><td class="num-cell">~$20-25K</td><td>Undisclosed minimum</td></tr>
+        <tr><td><strong>Salesforce FSC</strong></td><td>per seat ~$325/user/mo list</td><td class="num-cell">~$19.5K</td><td>Sales Cloud only is about $10.5K; FSC negotiated, often higher</td></tr>
+        <tr><td><strong>eMoney</strong></td><td>per advisor ~$3K to $4.5K/yr</td><td class="num-cell">~$15-22K</td><td>Planning system of record</td></tr>
+        <tr><td><strong>Orion</strong></td><td>flat Stacks bundle</td><td class="num-cell">~$13-18K</td><td>$13K / $18K / $28K tiers</td></tr>
+        <tr><td><strong>Advyzon</strong></td><td>flat base plus per-account tiers</td><td class="num-cell">~$10-18K</td><td>~$6.5K single-advisor base, all features</td></tr>
+        <tr><td><strong>Zocks</strong></td><td>per user ~$117/mo (Pro)</td><td class="num-cell">~$7K</td><td>plus $25/mo admin seats</td></tr>
+        <tr><td><strong>Microsoft Dynamics</strong></td><td>per user $105/mo (Enterprise)</td><td class="num-cell">~$6.3K</td><td>API included</td></tr>
+        <tr><td><strong>Jump</strong></td><td>per advisor $75 to $100/mo (Meet)</td><td class="num-cell">~$5-6K</td><td>Higher tiers quote-based</td></tr>
+        <tr><td><strong>Wealthbox</strong></td><td>per user $59 to $99/mo</td><td class="num-cell">~$3.5-6K</td><td>API included</td></tr>
+        <tr><td><strong>Redtail</strong></td><td>per user $39 to $59/mo</td><td class="num-cell">~$2.3-3.5K</td><td>API included</td></tr>
+        <tr><td><strong>Carta</strong></td><td>per portfolio company</td><td class="num-cell">$0 *</td><td>* The end client's company pays Carta (~$3K to $12K/yr plus 409A $2K to $5K), not the advisory firm</td></tr>
+        <tr><td><strong>Arch</strong></td><td>contact sales</td><td class="num-cell">Quote</td><td>Held by the firm or family office; relevant only if clients hold alternatives</td></tr>
+        <tr><td><strong>Google, Entra, Coinbase, Schwab, Goldman, Yodlee, Zillow to AVM</strong></td><td>login, custody, platform-funded data</td><td class="num-cell">$0</td><td>No firm charge: login and custody ride existing relationships, and data vendors are funded by Heritage</td></tr>
+      </tbody>
+    </table>
+    <h2 style="margin-top:54px">Heritage's vendor access costs</h2>
+    <div class="grid-2" style="margin-top:8px">
+      <div class="card">
+        <h4>Recurring bills to Heritage</h4>
+        <ul class="tight">
+          <li><strong>Yodlee</strong> (bank and brokerage aggregation): about <span class="mono">$12-40K/yr</span> at pilot scale, where the annual minimum dominates. Scales with users. Heritage holds the contract.</li>
+          <li><strong>Property data</strong> (Zillow's API is retired): use an AVM. ATTOM is about <span class="mono">$499/yr</span> flat, or HouseCanary Pro at <span class="mono">$790/yr</span> plus $7 to $10 per report. Pilot cost is about $0.5 to $4K/yr.</li>
+          <li><strong>Coinbase Prime</strong>: about <span class="mono">$1,000 one-time</span>, only if institutional custody is required. The retail read API is free.</li>
+          <li><strong>Entra External ID</strong>: $0 under 50,000 monthly active users, then $0.03 per user, and only if Entra is used as a full identity store, which is not needed here.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Negotiated or unpublished: request a quote</h4>
+        <ul class="tight">
+          <li><strong>Addepar</strong>: most likely $0, with a modest annual partner fee of about $10K to $30K as the downside. Pursue through a warm introduction to the partnerships team.</li>
+          <li><strong>eMoney</strong>: $0 if read access rides the firm's license, otherwise a negotiated partner fee.</li>
+          <li><strong>Carta</strong>: no API fee, but requires SOC 2 Type 2 and an invitation. The cost is compliance, not a license.</li>
+          <li><strong>Zocks</strong>: the full REST API requires an Enterprise contract, priced on quote.</li>
+          <li><strong>Jump</strong>: no self-serve API; a partnership is negotiated through business development, likely at $0 list.</li>
+          <li><strong>Arch</strong>: fully quote-based, relevant only if clients hold private or alternative assets.</li>
+          <li><strong>Salesforce</strong>: $0 for a private integration. Listing a managed app adds about $999 per app, $150 per year, and a 15% revenue share, none of which is required.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-inner">
+      <img src="data:image/webp;base64,UklGRqI3AABXRUJQVlA4TJU3AAAvjUEVEE1AbNtIkgS5aj6oJ/+Au3vuiSCi/xMAD0B3t4JrUB0UqvgdapGZ7EnGSDRJke9UFXB2J2JiEl+y1iRg/JDnEbnuRMuoZRqNiUnSWGrtEtErGSAKylaBapbf9Lyi/NcJ7+PxkQzFhjAUpYhDLbLr67xPqOet9EqSDNUkOCfdDuoidJ/nVGPK1K27dqgxnS3dzFVVUHwuMKyFl6WbMRb/dMEqkmQnXSjAvyokIOGKrxxfICiQpNi2bEXB4yKHy0G2da1HM+c/ttd8TTiqbceRDlpA47DD2v9qHHb4o56HTyPER3xE/ycA4EnQlORuAoC8A3IDBFLDiQk4AinbsAAgUCbtZS9ddtnLXrwATl0AcIKAEw8DJgiAMBLCfMOAE0SFWnbbDcPecFMAAhCATyEBDio1Wt0AQ4NPIUuULrctR9Mg9NJatNFkANruCGi7laNXIEDxyTEAbXcEVVj964Y6ujRNjnBsMEZQDCEkuZzQAkkEAAgIACALlAZzVOvWR5NSuPBXx9SgKZo++sgGoAAuAb8yHXIBv8QAgEYABgEoFdZSk5YFaHL0Xhfod0OCBCA3UhKAuTkkBAiADRrw+QqfBBQAey3H0qQ9lt5qWgBQTgAY/gOgAAIMgDQ88kizWCwrBqUAAIXUYj1brLLKYgEEAAivpBCKkEQPwAOA4QIX18U3CBmgJaWE3CozACwK/sxQ27aNJGn/sVPlnjoiJgAQZLdWrrLRA3KPfYqTLFYr2a7c3be0/Wskybb1/OTuEQldTBk9mEdlDeYxMrIrm7nPBp0z3EOPo76DQbfAzMzMzJxZTBGRQe76mcml/1/uoR4jBpn5kWxbtW3btjyX2nofY+1Jm5mZWeK99S2hvKOyA0TnBOHoJDEzwxx7zTGp1VJoR5Ls2layZ+1zn/om8Awn8QkXtOasaQ/Y9q9T4v/f9ZrXBMMUDAzdHSJhgd3Jht0Jgh2svV12dxMWotvm7vLmbaCUvaCiomCiIAygMAwzI4ltJEeSWHt+TWT0uu6ZqfvT0fZPka38/lXVMnNmjl93F0JCcnL2QMpC2AULIOUhJPLU5brfsfauLvv/Y2QBfiTbVm3btq2Ucy2tw2JmllhnfQVuxY+ZeTP00VopmW5s27KtZs61z6PHxsQlTsWqDHrp3bOXnGvbDtu5vtGJbdt2OttWlZpV6uQvpHbSslSV1rZtH8/ee0ZAkkgHuuHbtm3Vbm3bSrnU2lpHyZJRwxM8JtNiel0fz8zMa5nZkrrUe2+t1pIXKMxvwNhIkiBJkkQ9smb55/b/OjMcYti2gRzQ1+4/8UdhNm0bQ8cWrX0BAvh/Mit/SfL1R7+6T//9NHo7jFzvqx3SOSSn+OPGvdzPn/8o/lfqg9gf0Iq2j34C8a/P/jthEvO6y23TnDePBekbefXlC8ctev1HqmEd+vA98Z9+9afzn7z9W/R/XD/iz86bwNUJ2OhXFFEcuIHl0dzglPqf6o/tH/n9H8Z/+598b7e5r0S8VzlbQBswpi/NytBeBfPDVyjpewLxXuXsKPQx5g3tNbEYKxMTXhmvgpdqq26eLsFc8yriverZEdPNabdMNm4gpaXuDg7LchxlWLKJXZzOypDWJKKD4QoNzKgILY/Jw1zPH7gKgPUO8Xq277QkvCx4DHFsX9P0D58U/LV3lrlTV3AxQy/apSAAVxjqPzXXkXnz+qNP9w+l+I3da4t791EOPvIH/0p/40r5e0Ncvu/pFr2zjo/EtnhcuUbYnSEj8hEhoUIwcnWtTdfBQfPiMvBvmPBrtz8FbJ6eWjPxN8J6YAvuilLQlzlL6BjTSNj3BC9SytFWTQezeNiJJsmiM/RQrgXlY8IHJgASGSQAgOA12R+9+/C67AaiIYrIxL0veEpLQF+LPhm0hvcxbcrKx2gSYZ94QugNHrzJ5ENgTvQmBkjWCRKhalkzMWUIrK6ffVA12vXX/+gPzVeRzkkUAASmjNfR+ZipH+wBEFea7Wdc9PpMSAbNsAEANu1ril5538+6r/t3804en8MLkhQVUBqEKl+whcnLntbxMZzWf7xxCa9WeOlI3eum8LzUz9Z4LeZ6nPWR7KRej96s9MFX5VpjV5mfRSQWUq2EZBB7jcjpyr60r5dl/8erfUPzHR/RkEHYDCwYCqL0ys7FRAEAGhv6o6gUZgfX0zidSfdOoz/eaN/DUk8nswob+zmu317V/ZeG6kxJEoHQjAgfuhYru4/Pl/E6P/jlTlLGREgAzDKTkFOeDgOAZGHq1g6sEclIL6ZBY6PfLtqfeAIAAIHTycoVIwwAyfV4uIkAALD3BvH5/xDRsignkyAHH0JTRVMBJPHqn2R8M1bmDDebnugAiMkRy+F3nC7DCj6M8C7c7y9DoneVSY+2ciHGDRhAYARg076m6P3xo/fULJLT032q4UZMOdekGIzBZZE1rHAY0/6Os+M4HDfn9uMY1rCNt1rjFUtD81dQ8FiQ2/HJbb1GvcVUITU47bHe0xGQ/uMFXDJ+BQCE5BR/AFQ3Yw0AIDDO2mpYRqRr3DegDx9wCp8oGwA0I2IFpeviUYlLmBKVfrAByEyPNtug2nTYFtzpBNfLP2CedccPAqCWPAQAhL2Lut5hwz0khaQBcIym5tblFZ9EAdBK0qxJR+L6JxoAYFY3bzjNfBIa2S9ARocMn8CCD2DjviYI59ev3YmO44TLZSv6bXSpiseqtHN1U04RKG/14Vc/9SnJ+LD18ubLxdCkKe5FTHhqiksfad1RSXaECAvpkuTqvTsIkECy6RDiYUeUVZLMedjJpAIt1XS1GL9+Wi5KEtU7OpLxsfB/sQ8AyNrqr1c3XS0oye2k5IKi0N1jW8Cu4Bo4R1sT5zsFAACP1ZI4TvRpgASAoEnO00IMtGFz6DoAjAawhb4m5/4/n/92ncfVwgR8Vu+1Kr3S9VJXv2BGupFWOJcHbfAe6T/+brJp68xrTj+ptMaM0+JrHEPiLp/IYjsdJ3XfuBft34ABF+SIWW28/YV30G76xNR30hgrgvpO9Brr6Wpgi/E7hN9BvUGs+U4OAAD2x4euNaKuE/G+TDkzugbyD0g0Fe9AlzE2qIENgOykjpIXxREtAGQ4JrJyknf0rIpJPsho2EZfUwOoHP/fK1WjW2g39FR1vL1TvTPO6rox0laNqkFNNOBW+7bXTc1Xu5p0qOIzfEifEk3DrzrWjy1bDUgxjXQAVnEBFgTQAbmAfptPn/U93WC/IbR1GkwVQVtHYqqnq+ZoOjmhh88RNoi1uvUEAACidatBYyelqcxSNVrTbladLBNhn7I7ppcAyBg4a35jGKUAANN1oAzWjLMgaNhGX1PzoDgXk0ctb2M/Ole3qp0l+7p60Xlgd6ystdVE3WA7ulG/rXg0nT3uHcM0vIhLJ3BQWy3Xr5vbzYNrm9UxlNMvrdFbsBkMCloQIb/VM794LdgpflCACS48QhKMG2Sav/B2jfUeczSauqaSpyh+tTv5sdfE0a5zcacTtuBFhU4qrHH9OJR1MgCA5Lxm5gitZwgAwIjF+FqWeSsAhnEbfU3Nyc7Jqj6oN9msAXghnFCDsmUHnTBKW/DuUD86Fr7OU7f47TY31+61r+kpLVzsqKBqHMu1frY+F+swXd5u0L/WMiN9AKNJsZ4QF6Kw6uxJej75Zb3hDMm0BMPPCd04GILWgocbRkMzqsBoMOEhKNu/6JLRPvQ8qq7vezpoAiB0xtNNVhd9l3fSrJ470pqguBlbs3J0G31NzF/gNu77rhbGkTcSkCPqQ+9BRCLUd3o9aFuXow+utTzrw+3l63rkr81rcRpHOcXQFouwUqZbkzLU9rGdyuvy2m2ygyVZgSWLgkusCRwZuyd/8CkRvtP65Zl9ZTnNPqsM2FhL5Jqe0qlMaUsBEfsBPhinAEjc/opPq67d0ic9ADD8lmwCNWjCYuzbrK9J+o55vqtY3VpTKW2CwSAGBAJ4e+Dl/3TW+PBeHS082vV0V/ycnrYjKldalqeSWEbELUQYOgVW35xlTinToqQlAYgQsEFCDE7vwyPfnN6f82O9oIMwJX9ND8jBpm6eZG3tok5Mym9wfiLeizZlXPB6tp0BoJlmAACypFbdf6kvJACkLkDatvuaoqsHR5p5ffzyq185UYZizKfLbqwfdU/Wf53+/T/Df7466tqvRtwVjRQCJRYNuHkPy1k3S4saho9co4uoMjIKUG79KKD8335Ufzv3Af8B5f9Hs/6PWK0eB5u6WZX9Stn0+ISOdWaAiTgsE2Gfko42AH6FK7fjcSYBIKX/ohNYk316AABAbJVb7muKAJ+KWw5tL+PwFB8JCfYm2p+L19N2pefy58HXsN1erca7FVXlApsFggaGDYTjzXQytGHI5a6r4FAGwQj6BqcWt/vfm5+Ayj9kaDxkKFu8pB2tnRPebJ/lWn3OcQtNTLqCjewhvjzcVnisSt9M5j8xAYCgftZNBlORIxW2uO4hAABsmcmgPwAIZ2VmjeGx1lBVs2lfk3T1mQ9n/G2uO+BhwJjplk8Pp2XePb78bJ+Ws8Oaa5XNKpeXCxwtcycANgANlqeJ4yoMmwIpB1iyFFhhKMQ63p8//B95t/7DWnZvaWa6atNY7WR/RCuAOhF730VL/orrp/lgKm7TOZPo0H9QAQAAu90s2CCAlOk3Ql4Bw9qcqq32NUmffWZxln1rFZIhaag0y6Gx+dH6ovhsVzKzGisXexktDAEBEAD/HwB4A9DhddBcalUsF6uYSiRYWaKM0Ajb7Xn3Axd9+iFDNxKTu3hVRqUp/ccK/UlOkWFg3cmnSecNBE1ZrIYrAACIkqY69+Z2CC1gMrKkAHEArKFSkmf0BXC563xeAce1FbVVm/U1Rc/ve3c8l1OXK1gFytjYM/wZvqP2U/xa0iBjypFhAwXACosdOCzn5wm9OUQtFbdCCJOqtECCActaZ6kDrcP7nnGLB7r/4L1d9W3f+hj5PY9+dx4vygYcLds96I5fpn6siIf4CwAw32KWyd/jxWoajs6a2/kxa3SnAWBEN9s51AMApvLcZBze3tx+738uaWx6O3MEAJpaIZrWWtyrNuxren7imSD9jDkoaAsAQDFF7dxsmuVWFc41rHETDGLCKAHaAcXO0SIAscz/lQUALBejbLHzJhRJUSoNNCDBjOYeyxyzeXEZr7NLkv/jcX78oa9999mdj3KYwOy4nSsTN8mEN5geswdTkgBkki9fHNvwZjIOmZCoAtVfVO6BnhgyAIBpnxjBZSk1a3nwKTPzUxanocV2CCXj+pqaj+ZDZ764tHCHnr1bBwFZCEQqDMnjeoq9KrXS8qMh+R5fKJoFimBhwgjhQCxwtBLlzhmXARZoiQJdMRK0oAQSyAIiQKpUTBAcL+Enj2f24gOfP/8W1Bc//uKUh9aNQt2M2X+RuWSaAKDD4of5Fs1T0a5JASDwGkRAK+QAQkZKWVC9lsOnzOQCumQ49ASW5FmLfmxf05II3Ha9dPmQXfU4p9KBSIgY1VGvT117LEf/O4VD58pZaYVCyXA2nKFcBmIXFUvIvNGAsGEtrDtMkwUgtJCQQCRC2gIiQSIBAGYhaJwP3njw8PptOxw86NCfeAsNpBcNbVHmz8jf6Nrdbu/o08pNuACJ/2Ey+m3jB9im4Vk6mcZK/od+YGC+JSwr1wDIZNqbUBSpXl8zfCo5fy2E24xKOQYZAEFNHNsLZeP7mpLv/S/iT7/r+eFyM/niLWaOcYAV2iCBg6uHubh2XP66/9jvvYcqK6TlSTCbu7KevYps1puxp5rmFDa9cmq3ZfvWntf/hxnDIOCApBAoTVkyVIkOIAQBgjj4Bqtr9cjdzK/+eQCekF10A9i/4Xf+c8ZFYgEAxPQ+rNOwPKQAsg8M4ToeApA4HzCiaE7eWqOZWFcGG06F7k+ZC4CRtUlfU3Ljo+IfPfLFESccHJoySo2zGiSR4EaX4+Rp3HtXp8ptPA3uuWiTvMeemXor216/tt+4tLXZP40PSh0famx+S5b2eBNeRgBmAbDFUhAoIIjEFms4lSGfA0AAgKaA/HxgbxieYtvs8SRM5YrAEud5U4+Mg7wYK9dvwSidhA+hiTY+qHnz7u+lFKHpAIA0s4rwLPROJ6Jlh+W1qNFKAACSqs37mg/1JFy5eYY/apWFAlJOfQDKkYBk2dScR9/3ZaptPPbt4vaz0Ww6Pb/e+XTc6nv63qhWbybIPY92XF//PHZTXNPbL9fFVgNed6GYJIFCAQArFUeO0YJoKpEAAAiIkEDow917+zYfePrDE7JJuN7RH5Y3zIqxgbAhSzwAAK0Oj6rCSjo26ba9vGZCooqRjdaSaFmBBQDTng7ti7GUdZlEAwDoNlRXtOt87IT9uIW+puCXvkq60+8uuiwa1rg1Y7nLrcJCANvE6afuvozN6bDFXK3aLXxnX+cTSSlf12pLA4HiTkWC0y1pc6vjGVxJFoAAMHf2XGAJQBErym5JTNFIhQgRAUQIvCIeaN8QBT9oNj0+J09IOoZ01FG02ZXdZwRk0ZJHh38ETUokACCGcXF6UbMeVdGMFVbeyRrFKDFNATE5AUrw2jgPAMjTwqK9J3Jy8i0AAI3zsbYipt0A2EZfMZKn4I1n35zaJPBYKLiG7XFmHS0iXcpwE0PwpD7PKjodGXCIraPhgmgKpOQhAcKUplBe+iGujABQWImwAQJJ0AAAqJxK6W5xhLRUJIIAAFASJUecaIsa7hWtcei0NQ4V86d0HerQqafLElj0NiTtygwgZ3g1Vi76YYhXr7wDLwCAeNNSi6ayRNNpjXqsTAyd6DqPeu4kLqh/isJyjqie7KRMmg2vEljuHa928AEABGeuRnPRfHNLHQXAVvqagtM7wnlFsgq8h80qEr4GOSDsGnvSpj7Vhr3GgwIKNBUUgEBJQACSQTQAYDMOWyQJINFSDAtAgHARNiB1iELZlopJjxABAAkRrQQ4yJMIFZQQioRHJ/CuWB08OxLPO0hgBaCajgy8iQzmgp+vrjcSQNN6VmOZ8S2kiFeiEhUAwNS4O0ahuohEdcLGjPTv6IzQTpbYvWfkI6ySbwDKYCmz3OxAvozt5SQx/0dBAQDIEnyEC54PvRPd+Zpz8FjbvK9m9JyCw7eu7HCt9CRoNgVBCdpQVjTWjfOl/UWq61YnN6AQKGp4eAJLJAAQgcywx54I6jJghOkKs0AoAsAiwsGcit3Yzd0qWloFCoAAUQxYhSlTASIkRVfPcYkxvpMxadfoYCz51U3YX3Oik7j9/DISpwCopkvi/iLS4/ppFar64sU7bv+Qrk0DIA4R1Vip06+IRyFHRnzvjmDqjMfVgjyeSAzupCS6fPZB1RgvoDhesxaajuF5b3x9401i1f6SlpEI0P7ek38dy9p9egAAQMrwyrlOm6cWTQCAGL5iyU7L/wUqYOu8FYfzmvlioalT8Dr04Kz9+SAPv4APm/cVFxFTcPJs7Q+q8hNLs4ZTEFUEuWtALjrZ8Om7dc2mRJiAqAlglwUM6ApDAEosoQWeWDIDACILtCPeHCAApCyLaAIqWvXSllPZywdABCAAIEgjaXmhuTTN8wRnGd5m/I0J0HbgcswT43gklTuR3fOrIbRm3u2x+nblThIFAAA5yZb8drfm6+fpW00HTCfmq3+fhRRJX2bNe605rBMMmXibhAEAwCu4VmNBcyxPlpIV0y//8pm58O2ZIW0rHfqXtUIvztsGPF4Ha2tGssFkYiICAGCfr/79j2QElTu92XhZ9i8EndeMDuuXMqifNOWru/Kfp3bHnWW7/8+14PZDhry3gAxN4gBI1Pnmpz/uVb5YbB0Hmr1xLUvbNXvMru8FyMm+nJxvzdeL4lnKvdjvR5Fe6J1QoUHcllbEjhcChE8iFdUySxf77kQLQCOsAGza1y6uUzDq39CAxtG/fTy7Od9et/vRfff2IsMRXtiajHYAiMoyAAApBSCiwVYt9mRxCQnJjHAJLJkrKatM0RDxlolkjMhV01SP68fqTyEpFQACCEBoYadwt6/gCoY/7TM95XBpsihDcGHtG5HSHaUkkmOY1Ncu3VtZN64J2FbUglGxGkbhl95rgnuWG/17Nc4Yh5Od9jC9Ml2ZnilJZjnFnJ64MpQvBaR8NQgQrMOKwf1g6epSvGh9i1Hx2HqtJluDsoyI/vmuJK/Z9j/Nn9Xr43+5TM/J4ZF9zZFOgfqH1UrUur5yfpf/Xps3t8m7923z28v5TtreN+zFFzduXoCJAIBSU1KcgcSN1FWGG1DAkmlx8wjveO/t0xvbL4rZ23F9Dxum0v4tNUsnKOTKZ6VuP3qUx1JIKAgKKZXiwj/vd6c22G/2ikadAyEdwtiT6lKs6S0UbnMU3EHalV7X0wsvwxBDHdurOZVv4TWs4KNpHT6coh9CC3JzzRzmpvXoXK+b3XaveUtL8wIBAOACERVpisGQdFOiYiA2F6i4qSt3/fh4+re7V9uj/GBvcTd1XK/5D3vfev71tuFhybQZlkpbm7rlhhGAEEFQBqnwR95DjWZowKVvHR5JJgzNoBV0a7euR3YFqWaNuAQhAgGYEvNf24DREUZpIbZ6zB7FBWHeg95d6Z/sv/Pr/+tnGyRxPebJQ6e3+Xjs7XzuEbER0q2SFrZTgXIAQIJCJKDN8TsfoIAZ0sufw398Ci7RePWDa5qve+js9vHXuPQ9rbhpEQMgVKyQknyYV5xRKJCU3BZ2mE8jO/Zf72mZZv/+X6+3h3/9pPoG0Ms16ow4Pqftnd17MoeAzXux+r0hN/+WBWZAAoSMoiX8fT7iX3wFEMHlz8Xr5h6KcVYr0ltfw1iPS1vW8fcfh4fRuvPgq0in5Ne6tdJcgUJQ7IbuT39yU0OKKNu1XvVyu6h6zRcFoCgxrbtru9zbuG8UJmQ9qrRx2i+NMksZAMpBYyE/3XeAn2iG8hKI7rHeNXmbmMzKrc0NrWa/t2ltpwIMALRjAyI5Rkurl1BisCBUw5dLN1kQKB+PSTHCQBIAkGGrxPRGw/RtQjIXq15m8W3/IJBnKYSISvgPf8MPvAV8QxuES6C4fUkwDSPRTo4sj7KxNSvqu3IXd4gYAEUNHAAq42KLoQa6DYtTPhFHCyXi9nd8xXg317dytUMYgIgzHp+847evZzKkWPX/M+Xv5v8WPZSkgeoiEH7hLbq/AB9gDy6BXvL0jnXayVQWWFmDZWbKXjfhEl5a4Ekb5gIDoHhTBIGADjAAQB7hxvaPq2ZaP709+eThCYDERpj23YftawcAClGLqW+JIklRpIptrf4h7wE/AO/x8TLokZ/Vdt32ggxk8Q6MLZILCAAhugI7dqAoQDSMS2hpAkUlgK3s81LO1l9u8cz7+b17OvmnTqhAdSityIs8QwFgAaXMJgMzRSieD79ThqNNgG+AnzBfAv19pdNj2GJXyMBoMdjjSkKyhpcuI4BFY1MEi4AWS2e6KVAS0kA2AC1JS3nw+fPT7bniVO2Y5qEFi63ggGmnnocdpgWSEgnaPTWlRirgRH81ufJQd1ygzt6LHbgE+vJhpq2vZ0zWIAsCEbQuCTOhrjsUlmM8CNAUNkWBUNHPEZpl96aej+wv0LB32K62L5NrtcabKb1HJS/lmBhQp1QPKQRAoHkTAV1AAODy55u/k7yrT7vMKWnBIhczEhfMPU9lvtYN6Q0TBMAlKVpgtOdoxKYYx0QMSzJ46hnKROvTh9Nn5i1LszinuUu9OF4/9bGt0nXlHoD3ivpYveYZb0ZgiSW3RirKV8MF/9OH04CrqL/8ef/Ka2qZZ93h/iiXCHhAsaL9uWlsvHk2WDMgAILQ1Dx5abg5hR5KABiWBnva5w1YFHc+eSrymLe2uvqgqqL2eeG91XadXJYBVm3J8vt2WSgbMEgqfwSrwTxDH0AGiMGlD0Koip1LbadlV9kXldhAe7J27ba1jmux9eUCACjfopXZvCNKZ24Mtf8fSmVao0LHNWfFPJebJylum9sJ45lbq+wzcTYch7v/tmXfvaAsWXlKVuddvq17IiWJUajyM4oHn0GAHoAOlz9/Pvy9O07PqoXHgsgUqhdIAnouj5PrON/wvfa7xABLu8PTIc1enSkQvb+1H2d12zwA+rmjt3M7vnzqTblpf3nv2WnZXrJmcU+mEbPF6SQntbzrNa++Nzzc/6vtYiuNRY3Fsbj38ezhfAKSVlDYc4QDuNpbPfQMBXSFFG2XPT+f/pu7Z4YftmYVcy1NAbiE1qesbukZ5mtNsLRDz9t/lYoVsLe63wfv92313W/XApP5U72fx5NVblyr7l9a+XxVu7Pdtr7cnD43dejkfj/Mj9vTLe6mGp59yOv7Vaij6ro5nm3/Ht2CMTkiy3VNKl4k9MgMB3S/9J11CoTl8aw7NfYdC1aGDAAbBkUf5DbuHbrF/qYrdsbJPLp+poFS8dIGnvqqrwej4Iq7j2n7DfcVXATrlbXUn58nPV4eiqsL+irbeT2b+6Zj585zr+7NncNqKBf3/u3ZZuvPCobbNEi+wSp1YQCgJxwvex49uVm+nDv3B3toligTegW4YpNV7cdu2rI7Vl+H3wHmgrNPMUZs6oQwIsgFbGWNexgLQCLAllO93/Td0/36OVcqtlgS1c4NPB33x24q/T550651w+l6nA8fr73TMVZ4I0S+rzAVJ/jB0xfQCy4QLnlePfIzGCZeoJlqpspBjgjLlKpG3u/u7SYbvbTeUSyvNolYgUBCOEG5c0HcCrrIHSMxZfYxX412aqIkALaczGo8nrcfcLkm5V2Zduvb3evP7Nb3rOUVgzCNQhQn5L70xiMMhi+kFe9CdVxm5EwsIkQ9/S86OSi6hn7/MHjodvnB0IySN3agomf2Sp+WTwdSWjN5vb+MvnV5xX8l4thPIftlza3jGdCzrTFqRDn21Hwlyv1D4n7ZuV/OEVejUfqQKW96z+E+mOO7/72uKHmWPm18OvCmsQKmvoNYFyqvjzWmWfBu9PuHwdNw+4vf2yGtK4ScKBRzVSZoy0LDpRF668p+RdMqbvILbAK02O6o2MICgLgoEegyJDZgg5je7Z3VssVQgMGWAUXdvdN+mt11Tant2Goenf5tnY6RUZWWeuCpmOK5eGuKJxiPCKjKbjMsY3cmPjFuZM0DaGLEJZ4qmdGV2EkaaiVVKAEaY1ooGkxahYK0S4IBCExGAd5lxRJdJ+KTEQKAUwgu9DSt52rNdN2hcAEAbyUPQAyF8KGbcyYnzvfJezVL959wHOVZ+qSsMHd1T3UMqWKTMYLyTIoBgBSOMZwRnYggKAAVz9NH50DK3JQhSbgoiVYtApIwKEN/s6y2DU5GlrQHa4YHGZaoOjHKcOkBbQF9uVZoS3ujLwCwRfpbmmYQVkijovoYQYk7APFCMC6OafbWMelHZYudpGl4/9C3yK4JplGwSlW+Ipf0V9xkmoaUp6vpcN/53eW13refz0MnAy6IFWAmEaTAorQE8Va2uIwJjOXteh92MmWXUJ7aExPxwdhsx+242OSGe1ezh323j8/Tqb84nz2/WKMPXEIOoC8U8PBrrCUBzkX7Fx2y8jtaZu1T5AEQSFdlfsr6RJoVbSlNo8tvtEMAAHBTJT9fY0zUQKzCZgAAaHa6tuVo4l/4wNrF6ZTKRAVmzMSfAICdliDJAZn4ZDrx+tMIY7QlFRgdbxMHAADVMWC6OSQ/XzEmaiBdNWaM00llDhXIOotwvhfhysn1pLqcLjY0lc8WbfkscQPBtUW352K3L9oAmKM7LQtT0hIdmklDcRMZjLVe0bnftyCA0IIbY3YhCJaBaGtSVoCIYozsZXhHk/wSvVaVzMTbogEFefHGnoJBs9GdlDIlK9ppwP1//BvueB4QIR1lUU4IVij26lydNV7MndKM3cKv7dMCMIINDCYZCEQ0bwHJLS9DQSIwmLbre4urQimmh3JhpUWuptvtIqtM0b3Hb//xvfNf4+QpooEarSQBQMJRetFlZ+kNP4ilbcrsHEmk5Cts6yUIO7+V7TGrLSBH+w94gzUzJgBi+wjWcC3K5LZdTUdbSGVSkNEPJKZegMd4gRAAotXjfd3thwwpnw8exjxijExMI8ew82/SDzT9tg42HUJa6DGje9EVJCa9ATAqr3JvcBqwPJ7u2TcX8rDGyp0ixB0jBgQ55SBqzgJAraA/H/Ka7qC2ci/RFOy9dhuPkvCQRf1mQ9NAzGqnAVB5sefioAIDyAQFK+Ip1mCru+Xb8ng/pvvO7ePYutIlACzKSYWZNEkooCUEYVN6ydqpfrx0sXadjvdTpuyg0fEk16t1n/i0nY1vLrabPBqfu8N6/Lew1lKuFvguCQCQogX9P36niUYAZAV3rx9hSTiY9V5DcT/CKikw0RZI/h0xOvJDXphqCrLUFxLcrZltxAIwn4yvu8/SwIpGQCas97ba2hg5c7qYJyqHcztVhDMACP1P0lpIcb7OErMbaluXxPQ1AG3Oy7L5qb6YAfdNr0NTuF9qHq/RAMxb536z2BGj0EQ7kWf84s8z8cI9/x8sc7SFtfAIrYQoccAGMtKCgGQ84cGvt+cetO3OSkMWolxsAGpIRFiUECAMiFhewR/9/PdpqcO+k//rt25nB8mOXu72O7ZCP+/wNNRQmAlzxQuNs9sgxF0C7l8PhzM0u7SGBClRQ/7T/If+iIG8IPodB8Aq4zawKlOEdii4OXfNY0anvwQNozZwidrHAIDzdboip+anEbIyM+V0aA5I1C+vM6FzAWMA8PS43DC/JEaUWABAVNfAVhCEnpUHmTHWtmsAYLZv0wbbyszH4lwfuYUI0f/FARCZTwfNppkiPBE5DR+8/c5uaw9f8OnUGztfL7zWhgeMokJUQFIghXbfmqatrbNarFQqGiEAFCAJCUMERWmnHWW0syK/M9r1fd4f79x+30Odu5j3j9O/6p3WeSDoP9Up4nD0KuuwsWS4TQwy1mvBamDQ5pA5CK48Ow3tv7UCHeEFoXyX9dSVe9u5vkDa0HUIQ8AYWDSuD3NkncAMau7QOwme9+6Pkt5/pObWx3jwbRRv7rcSAJhxrKSVPYkUBEW4BAp+CeF23MvkeUUaKwCJZeRBuoKugxKUlpuVXN/b99yg2aY3D94T+eWT187uM+fMS6DSei3shAGpFAQRWFIjpZW3jV3MvmxLO2WRBkKgKBIACCRAAAkwpB2h+u4/tie5r8m7nN7ro90usm9n43tPX0mT3+q4OTsGbTBudWFV6nIL7FCOs14EbQ0BOjhja/55Hpy3ZrSDrvidLABGAm15Dpd+Bjy/gDpMIzuOW1q1SlLEA1xBfvAImMY+S6cLGOLg//a7e/JTJUYM/4xuAIRmXMgheqTYvzJp/EM0AIBKs2DYLNrwfCI+/3MHZNXdMxGqWe8KbaORMNAu8SCXEgwhwttMG9vv20wbq3MKjSTZ5TDAUmQgAYACLAJapOCVG1Gx0prL9st5Vou5Zu23suvMp2GLduKmkITRSJLWMqpVhoTGkIXVweo/8mb5L3nix3+1wBeykr0nkx9UAABi0qkt866gv6A2dtCZnQmA5G+U19x/yJAxIvQAADQTgFVJ3dSoX5PBoKJdIgEAWsWFeMVJhARU7JEfWgEAiNGprZl3Qc0mwrsxfAU1I+85WT05WzMxcJq1W5cz2kFqkYMEKJSk14omR05Ry7ViWYtnw+Q9NgmyXEYRCIxBACDACHBjT82bYUt51q3N06TJkyZfp39Wq24A0+pLXgECM4wiK0SHtrB8fSzLf0lF/oPSRIrK4q8AzbnOLLQCABI1nXdU0i6kJXRdrazNJAAEr2d754Ga9vmZCuZbFgBNy4IVkHHvRbtlb/4E8d7fvfvos8QkpkaL7MyovAA7eJ6VsSY/gBo053pmZeLVa/aoJq3c7PVb+qNXsjA4ESPekF34qSQrQ0x/NmLBraX4LfStubVOUkxTEqfgcSZ62tRs67KMGePjt7b96u49LNJQZwX/pkcjQQYh7SIDE5pT01kZwzlFWcwmLbT1ojHzIRISCxyWAiABHpJZAEaWe2ByysK4V7/VV49u7ClxuzaRFxrBUgKUlnaVginLhNPnx3jy173pX72EDc/wrnIJAP809Ih4DgAA0KbOP6pd/CTKrWolLXgpVZh4SHwTfxBY6K/zNgc1VdE7M8avXRI8D80FiepgmbRVmWYYisRhxFWiNO06D1C1bSQm5WWEPrEbkwb/NOfbGFT3mz0qi0vN4j0Sg4xWpjYytZKuUemy1CSWp7gEyu5g97Hl15RBIdNxHIBZt9OycgF1oyb89uPpsPG02V0Og3GSLEoSSWRoyQjRVFJU1MJiQdrh0mn1u0HcWNkJwYRAuLQIsMAYgCDJCVgmE1ctzFc5I83c592eqpKsxEiQOLRVuo4vx3r05tQf/2GL7RjRgHLUVG/lQpFH/0eTLDT2WjIzAlHbFPhRaUoAAEGLNMVDZ0Y0dHQ8vTNCmukBAABgMgDQSd0qujfNswaXVvsb/SGpEYEAoBkfty3jWaTfwJAzQZGOS9zH5MknHg2aNRnxPEGlLBmvwerIy1o45z4OWkHFx9YsTOY3ugA7AAAgzRepaaMAYoZsImU675j8ZJpGYQERLSlDGUG5C6INVqhAdpmbzJ9NbVspDCjPaee4spMhwMAFYADYHJfuRm1XV99We6zLI2bL1sfqjG5TKogWWyIEUXa3Uxz86z49/7PegxXVeADjiO3jUIe6621z6Lbe5rUtRbd/uN22KGIBLjZLwvJ0BvrEzuiCOlBn35Sgpr34sKJzS2enzknnqH0JM8hof+vyit+mMAW4CEBb4mOaV4NXAEB5jK7gCcQXETp3kAKAts2E1uMUAHtFvDtz0nQkACOqvd67ud+sCMiDtvit4GJYapbV8gxTbTOP08pp8GBzR8MaFAdROHLGY6yv/vJ1q7TWA2swkCoWRMIEIjj0ghGMYYABEFhShqIYZYPMoRo9BlMIUYxwuQKQcjhcGt4iy2t15b8OlxkspgbVJuNAyLfDE3EUDYO2hnM4OvD6S5ZXn+bV8b974Z4FrmhGy9jbVPD+ChvJxogmABK7tmW+C9U2DxyuR+UzLQ+AoLTuFGcxIlHkTsEwg9lUsOWFAnqsprFlAIBZpz2MQ/eSsoyQ/hu41vHFq43jw7LYXbRZs21P5i6q7dVwwCBTp0hzez8ATIgZ+4AOQCV3GhPWJikNOPCplJIIlFhUIguSZJBDSzAmIEAjEBJoYXEaq1yQkVyGYocoNkwbW8wGV0/DYB3/Z57ub7rq9YwGnNyjGctN8bGSImClHBcOa6xvrGM++edWLv/eE9RAhTqIG+zkB2MzezLjMQAIPKHfVo8arpIliRQEbdEeVi1rpiZCU+0+O33oWS7BOZMDtLF3cNj2U9Nysia/IuN+p+kk4t7QfHRbHRvdzmw1aQdAyNc7Lf3HEMDQ/kr26Ph4EbrtnNbRzYrb2202CAdB5abBAAWg9ZTm8ztqYgs+I6T8hGNEFIlkSCADiRQgwwgK+ApnqECBVJgrvle28ViMhRt3NZnsQIlViVMomtc0HW7KivPs9Po/WE5dXYqDCvgKTEnQCqcz3D/L8X/si/Z/8x7NeI8KNEM34tnu0PFuzaJChHl8jKkvAKs6kds9athmGg9A0tBQVZM6M/R35A8SBPeTcChXZfK24W/8WjEf9ztkFc6Wctyhz7L8D4jqX9sObic/FsFU9iId75ZFhQi7W2KMOgBWNZHbk5MwkJmXGycDlIBy+uPDT7k7b4q0hh2RsKU4SIPkxakIhICkBJ3QA7NKSzFyAqQYyvR0HO07VlBHkZBMjrYaczXytPjeclppf/1HHW5Xrzqoag3b8hYMckBYrbA6mc+en4bT//MORtTiLd5BBKBuuY576JrF+VYXMpzJGgDQuOXDdq1XRaMAEG/nvCu7f+iF0KYdAgPR0tvKepAyOxHABawrqNL8dKPJB+581F1RAgBePdg2l8wpAyB6qkFNHoRN8sfeT+SacaFvubiHrlmc1IXNPsiZrTYrbQSJZhvhnn6yH+d/zP2T26d/821qPRP5gY0Cy6+RHCyBEg2KtEEoGxWpLIHBUXNITEofx8fhSU33dHNxBpElZW5ceft4vLf4erZ9t/yObcfoQEtJIhHKsijn99MAEz7gLWrQAgsYQ1KX2C2X4QUnZhsAi74FVTEVAcgacYwYAgDtQdILcP+GZybeAMSofISmomwpovopcofT7ZAVtCXSJPxZhlTFEAHIijhGzAoABGLBCYl0xfdiHn4GWuhskzgAJD/AVHByGX8AsljKoATAPMqyFgGAzIgladebHB/ujZ3YLdcdjqZCywAsugXbk+Y+CPUeeGTYfwOyTb44vla+rb6da+o3bknRNYg0nBJYGyQSSYi0JJYeaEM3CGGkRqWw7pZheaUxSKFKA0or36m89o/jt8NeWyfjgifl6/NRF6Iw29bMhSBby5Tye61bPLg62GCCEU1jtyHKmjqQZkvgP3Q0KQB49encqfkLxEQHQKIfAxoAmlldP4HzREILAH0AS+n8n4yMaXYhBKppXsoAsFpZsr0xsvgOfQ9CG8nG+8L1SZQsYwYkIHix2C4VxNmUalyqASDRliUaAAzfgtWhmxEWae1AljqQZkvTrg4ZXUY0C8BMnahD1R2C+uazhYB2+1Ikfa8mB//yeLps8o+AHFD/1bf7sP3L+vT/NuttM9qS6pokOw+1NigMlNCWMgjlgCYEiEKtbuvZtm+jxS32NLFyE0AiEdVqO7s7ufTrUDuupl3l1hmwFLSE1pw1W7X3yg73YBxhDwnaYAUjXXv1Xx0wdWqTM+516Is3zc/fxQZzU8bAXPM8/SAAIB0wwq8h7FcfAZAz0YMMeuMBAIzsEWRD7f18nSgynpfimXkMgNHnLYzdzhj7k0cAJFOeRgbz4MbiTPqLmlIiOGQ1FIBEt1zC+66iOjp8mzE9aMu43Wwfit6HIloMADS+LGvCAIAL55OB9vazT9vJAenUDFx7pQ4YTjGtbi/0fedlfkYXmJvqmEKzjRXACm3PaVmZRA0kEkPTt6wcG3yvGulvmQT8/DKy5+BGiBgBNlqAKqARUN38379Pf/Pz9g/fT/95faPd+qO18YmTzklRtEGZSFPZITXSCFKmV0sSb7WW2l566CZXTAlpElnz6DnUzThquS7ezk8tkKbEwziW0fxKp/nzOxSOcIEcNjDWw9QByV6qzp1iW1rcSY573eJO53hmnLucz9/FlvJjSDLyQdErQ/uvGpdLfMo3AACjR5rs2d79eIqnRbsnp9MrP1sKAgEg83LdtFzn4rVXqbvFm85er5iVjgCATDv/5TK7eSq4s/eUGHU7xGkanQ9SJj936Ldzuo3atUcRX8S7JUSMBwC0lX37S8odggpjHGpQlvj1GCY90mTPtv3VMW6PvQgEICX+L5MSSZakXFIHabijT8ty6f2Ur4BpbTHUL2EkOWgEUOumHZRt0W4Fr9pVv5wTFjo5UcVk/dWxrZjorTivCMiyJBNHAGJMfn521py8x3mK1p4XkS7OBi2X2NQfAAA5zc5MejDu3qF/khCdYTC0a/rHGJUoQJOtLTQr9oZWZYTb0lYkN3l3a/a7c+M9Lvqeb2V7YCw22xpvoHy+dn554lNmtle1fVdVAZfA6w4d17f67ZcvDfUgmOvnRUF5Tg4drDO8c0Ss1/kdzZu+ekgghxo6OMPwJF5Pv1XIoxH4wO0Grt4xPidvY3f8MNLmXGHxcmivQwQxSIESCbMOs5TZDApooBFZKgUkAhqhFC1uYJQFJ+CCqjAyaCtQIlhkuHZLeOCTDZ8trvCD2yb7Ad9a2fPr25yvwu5uZUXozMQdAIBXMbJ3p6trifbL1pSFhQjPNDnMJX+x5Bp9hwkWBOMxAGD1kCHvczPxAgCE3EU0AHEV0Z5Ke2mCI5iy1hC8ivJBOJiHIwdbk4WF6J+JrChNrmnfahGkppKixbstS4zoTKOgBwBIHjCHmjdk4h0oap/LHcZtGI3TPc3osZTL9ULTq2YYIJ09vx5zvgq7uzUr+s0Gm3d1aSEV2i3ZmAyABEiexagEcM8IAVdwQ/XaGclZFiRRAFZxN6Q2wz4ISgziCnoOsi2wW5ZvycgMbbQHWbFH3XzvV6vSF2y+IEIGJTRwhOv1u7h9xX9u5Mdc0+X+B4St3sZhdY28NUJOiMIMKCAEkICIVJAIkQAAIIJGhVBSy1mLDCNZxdvUSYVlYZlAWbzEzuOre+DziYYHgjZ/IPR70R4SFpgbHqEJ/Oe1GjyXBDa8fYCqi3/g0RLtRTX7BMqX0f8Cr7a2+R0kkEIJFXTweOY/0v5jH0/P2bvaZXazjqeLYoUwmzAXmh0aaFJiBhFAQQJABAGAkELKyo8HOVhlU9bhibPGqXJqSMU+Qvv+es9u645Q+EIOLskLMijhCPePe9GYJ981A9/0/iZYNaxeE9vLoZnQBHNhpmhCpygiQQyRBPBSAphiKUpMRSkN0uAgw2HKcYI+NtjH+8YLBgTCAQK4NC9IYAcHeD7xfl0++QuS4qGw4yOKVUfQAczACGqJBFJhJEAiYSUHRwwYJIlBCpJw1DiecJrazHxcnQVKuMEVcnCZXhBgB93e2yf6xuduyvE7JJznOJwf5G0TAQQCWAEACpFQkpBIIhYYEABgQdB9OGnWs2ea8l4dTBCgGfwXLJfpZ4D/tXem6+4H22PxVjF5w//swShliBlgQA3eDnZIg4BIIgBApQWkxMJOfnqvaflije5Sj2YY0QwgAZfuBQUM8ITv1U/pPPtA+oULQ/hEmxhjGmNWoRMhQgAJgJbIlgQF0RrtyeNX3lv+6dzyOrUwwogGmGEDl/AFEXKo4WQJaN7fDt52otpLPNxwNWRuorVqZxFteD1tGbZ4meZ4wdg++6htnnrfoocMTTBDCRm4rC9IoYYBHnCDMzQexck7190b3L1i8/RVZzOxtiVSardCCTuYIIUCEnCJX92JD1RQQQklHOFI3WBuAVIAG+SwA5f+BQlESCCDEi2wQQYR8u75/7uwYIIV/LdiwQYutQAA" alt="Heritage Strategies LLC">
+      <p>Preliminary estimates for capital planning · Prepared by Supernal for Heritage AI · <span class="mono">2026-06-10</span> · Confidential to the Heritage working group</p>
+    </div>
+  </footer>
+
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+
+<script>
+const VIZ = {
+  "Identity / Login": {tint:"hsl(220 6% 95%)", fg:"hsl(220 6% 30%)"},
+  "CRM":              {tint:"hsl(295 16% 94%)",  fg:"hsl(295 16% 30%)"},
+  "Portfolio Reporting":{tint:"hsl(220 38% 94%)", fg:"hsl(220 38% 28%)"},
+  "Planning / Aggregation":{tint:"hsl(50 28% 95%)",fg:"hsl(50 45% 24%)"},
+  "Custodian / Brokerage":{tint:"hsl(340 18% 94%)",fg:"hsl(340 18% 30%)"},
+  "Meeting Intelligence":{tint:"hsl(210 32% 94%)",fg:"hsl(210 32% 28%)"},
+  "Equity / Real Estate":{tint:"hsl(140 18% 94%)",fg:"hsl(140 22% 24%)"}
+};
+
+const TOOLS = [
+  {
+    name:"Google", cat:"Identity / Login", eff:"Low", pts:"1 pt",
+    cost:"Free", heritageShort:"$0 / yr", firm:"Free", firmShort:"$0",
+    verdict:"Free, self-serve OAuth login. Native to Supabase, configured with a toggle rather than a build.",
+    buildNote:"OAuth 2.0 and OIDC through Supabase's built-in Google provider. One-time setup covers a Cloud Console configuration and a consent-screen brand review.",
+    heritagePays:"$0. Free for any relying party, with no per-login or per-user fee.",
+    firmPays:"$0. End users sign in with an existing Google account at no cost.",
+    api:"OAuth 2.0 and OpenID Connect, via Supabase's built-in Google provider.",
+    data:"User identity: email, profile, openid. No financial data.",
+    notes:"Keep the integration to basic profile scopes. Restricted scopes such as Gmail or Drive content trigger a $15K to $75K annual security assessment and are not required for login.",
+    srcs:[["Supabase, Login with Google","https://supabase.com/docs/guides/auth/social-login/auth-google"],["Google, Identity Platform pricing","https://cloud.google.com/identity-platform/pricing"]]
+  },
+  {
+    name:"Microsoft Entra ID", cat:"Identity / Login", eff:"Low", pts:"1 pt",
+    cost:"Free", heritageShort:"$0 / yr", firm:"Free", firmShort:"$0",
+    verdict:"Free enterprise SSO over OIDC. Native to Supabase, and only incurs cost if used as a full customer-identity store.",
+    buildNote:"OAuth 2.0 and OIDC through Supabase's built-in Azure provider. One-time Entra app registration; single-tenant configuration can restrict logins to one organization.",
+    heritagePays:"$0 as a standard relying party. Entra External ID is free for the first 50,000 monthly active users, then $0.03 per user, which a Supabase backend does not require.",
+    firmPays:"$0. Users sign in with existing Microsoft work or school accounts under the organization's current licensing.",
+    api:"OAuth 2.0 and OpenID Connect, formerly Azure AD.",
+    data:"User identity. No financial data.",
+    notes:"At pilot scale the External ID cost is $0 even if adopted as an identity store.",
+    srcs:[["Supabase, Login with Azure","https://supabase.com/docs/guides/auth/social-login/auth-azure"],["Microsoft, External ID pricing","https://learn.microsoft.com/en-us/entra/external-id/external-identities-pricing"]]
+  },
+  {
+    name:"Coinbase", cat:"Custodian / Brokerage", eff:"Low", pts:"2 pts",
+    cost:"Free", heritageShort:"$0 / yr", firm:"Free", firmShort:"$0",
+    verdict:"Free, self-serve, read-only API key for crypto balances. The lowest-barrier custodian on the list.",
+    buildNote:"REST and WebSocket APIs with HMAC key or OAuth, including scoped read-only keys. Well documented, with instant key issuance and official SDKs.",
+    heritagePays:"$0 for read and balance access. The Developer Platform includes 5,000 operations per month free, then about $0.005 per operation. Coinbase Prime adds a one-time onboarding fee of about $1,000 only if institutional custody is required.",
+    firmPays:"$0. The end user holds a free Coinbase account. Trading fees apply only to executed trades, not to balance reads.",
+    api:"REST and WebSocket, with HMAC key or OAuth and read-only key scopes.",
+    data:"Accounts, balances by asset, transactions, orders and fills.",
+    notes:"The consumer Advanced Trade read API is sufficient for estate use; Prime applies only to institutional custody.",
+    srcs:[["Coinbase Developer Platform pricing","https://www.coinbase.com/developer-platform/pricing"],["Coinbase fees","https://help.coinbase.com/en/coinbase/trading-and-funding/pricing-and-fees/fees"]]
+  },
+  {
+    name:"Wealthbox", cat:"CRM", eff:"Low", pts:"1.5 pts",
+    cost:"Free", heritageShort:"$0 / yr", firm:"Low", firmShort:"~$3.5-6K/yr",
+    verdict:"The fastest CRM integration on the list. Modern OAuth REST, free for subscribers.",
+    buildNote:"REST with a personal access token or OAuth 2.0. Tokens are generated in-product. A rate limit near one request per second means bulk syncs should be batched.",
+    heritagePays:"$0 to integrate. API tokens are created free in-app and included in the firm's subscription.",
+    firmPays:"$59 to $99 per user per month across Basic, Pro, and Premier. A 5-user firm pays about $3,540 to $5,940 per year. API access is included; Premier adds developer support.",
+    api:"REST, with a personal token or OAuth 2.0. Documentation at dev.wealthbox.com.",
+    data:"Contacts, tasks, events, notes, opportunities, projects, workflows, households, custom fields.",
+    notes:"The most developer-friendly CRM of the four.",
+    srcs:[["Wealthbox API docs","https://dev.wealthbox.com/"],["Wealthbox pricing","https://www.wealthbox.com/pricing/"]]
+  },
+  {
+    name:"Redtail", cat:"CRM", eff:"Low", pts:"2 pts",
+    cost:"Free", heritageShort:"$0 / yr", firm:"Low", firmShort:"~$2.3-3.5K/yr",
+    verdict:"A large advisor install base with a free API for subscribers. The only friction is legacy authentication.",
+    buildNote:"REST with HTTP Basic authentication using a three-part credential rather than OAuth, which requires secure credential storage. Otherwise straightforward.",
+    heritagePays:"$0 to integrate. Developer access is free, with no published API or per-call fee, and is part of the firm's CRM subscription.",
+    firmPays:"$39 per user per month on Launch (up to 5 users) to $59 on Growth. A 5-user firm pays about $2,340 to $3,540 per year. API access is included.",
+    api:"REST, with HTTP Basic authentication. Owned by Orion.",
+    data:"Contacts, activities (tasks, calls, meetings), notes (append-only), accounts.",
+    notes:"Legacy Basic authentication is a security-design consideration rather than heavy engineering.",
+    srcs:[["Redtail API documentation","https://support.redtailtechnology.com/s/topic/0TO4u000000sQrhGAE/api-documentation"],["Redtail pricing","https://redtailtechnology.com/crm"]]
+  },
+  {
+    name:"Advyzon", cat:"Portfolio Reporting", eff:"Medium", pts:"2.5 pts",
+    cost:"Free", heritageShort:"$0 / yr", firm:"High", firmShort:"~$10-18K/yr",
+    verdict:"A free in-app API toggle, though Advyzon curates partners selectively. Access is gated by relationship rather than price.",
+    buildNote:"A credential-enabled data feed configured per advisor in the Advyzon interface rather than OAuth. The mechanism is simple, with scheduled nightly updates.",
+    heritagePays:"$0 recurring. The firm enables API access on its own subscription for an approved partner. The cost is approval and effort, not dollars.",
+    firmPays:"A flat base plus per-account tiers, starting near $6,500 per year for a single advisor with all features. A small firm is modeled at about $10K to $18K per year.",
+    api:"A credential-enabled feed, enabled per advisor under User Settings, Partner Integrations.",
+    data:"Position-level account data, holdings, daily portfolio values, household profiles, insurance data, custodial documents.",
+    notes:"Advyzon adds a small number of partners at a time, so the gate is securing a place on its roadmap.",
+    srcs:[["Advyzon, approach to integration","https://www.advyzon.com/main/viewpoints/2022/06/06/2022-06-06%2010%20How%20we%20approach%20integration%20&%20partnership/"],["Advyzon API enablement, RightCapital","https://help.rightcapital.com/integrations/aggregators/advyzon"]]
+  },
+  {
+    name:"Orion", cat:"Portfolio Reporting", eff:"Medium", pts:"3 pts",
+    cost:"Free", heritageShort:"$0 / yr", firm:"High", firmShort:"~$13-18K/yr",
+    verdict:"The most integration-mature reporting platform, and explicitly free to access. Orion does not bill the integrator for data.",
+    buildNote:"REST API with a staging environment, a GitHub SDK, and webhooks. A Partner ID and secret are issued on approval, and sensitive fields stay masked until Orion re-scopes the partner.",
+    heritagePays:"About $0. The firm provisions an API user for integration partners, and Orion's Denali data share carries no connection or data charge, with only marginal AWS egress if Redshift is used.",
+    firmPays:"A flat Stacks bundle of $13K, $18K, or $28K per year across Foundation, Essentials, and Advantage. A small firm pays about $13K to $18K per year. This is the only transparent pricing among the four reporting platforms.",
+    api:"REST plus the Denali data layer. Basic, OAuth 2.0, SAML, or Partner ID auth. Webhooks supported.",
+    data:"Portfolios, accounts, households, positions, performance and benchmarking, models, trading, documents.",
+    notes:"The best documentation and tooling of the portfolio vendors, and the clearest case of a free integrator path.",
+    srcs:[["Orion, API user for partners","https://orionadvisorservices.my.site.com/OrionSupportApp/s/article/Creating-an-API-User-for-Integration-Partners"],["Orion Stacks pricing, G2","https://www.g2.com/products/orion-advisor-technology/pricing"]]
+  },
+  {
+    name:"SS&C Black Diamond", cat:"Portfolio Reporting", eff:"Medium", pts:"3 pts",
+    cost:"Free", heritageShort:"$0 / yr", firm:"High", firmShort:"~$20-25K/yr",
+    verdict:"A real developer portal and Batch API. SS&C-gated approval, but no recurring fee to the integrator.",
+    buildNote:"REST with an OAuth 2.0 password grant plus a subscription-key header and short token lifetimes. Includes a Batch API. Onboarding requires a form and questionnaire approval.",
+    heritagePays:"$0 recurring. The API is part of the firm's platform and partner listing is not priced. The only potential cost is an optional one-time SS&C Professional Services engagement if the build is outsourced.",
+    firmPays:"About 1 basis point of AUM, roughly $100K per year per $1B. A small firm at $250M AUM pays about $20K to $25K per year, with an undisclosed minimum. Cheaper per AUM than Addepar.",
+    api:"REST, with an OAuth 2.0 password grant plus a subscription key. Batch API and SSO.",
+    data:"Reconciled accounts and holdings, transactions, cost basis, performance and risk, household info, alternatives, insurance policy detail.",
+    notes:"Authentication is bespoke, using a password grant, subscription key, and frequent refresh. The gating and questionnaire extend time to launch.",
+    srcs:[["Black Diamond auth, password flow","https://www.blackdiamondwealthplatform.com/authentication_password_flow"],["Black Diamond pricing, andsimple","https://andsimple.co/companies/black-diamond/"]]
+  },
+  {
+    name:"Microsoft Dynamics 365", cat:"CRM", eff:"Medium", pts:"3 pts",
+    cost:"Free", heritageShort:"$0 / yr", firm:"Low", firmShort:"~$6.3K/yr",
+    verdict:"A standards-based OData and OAuth API, free with the license. The friction is Entra app setup and Dataverse configuration.",
+    buildNote:"The Dataverse Web API is REST over OData v4 with OAuth 2.0 through Entra, plus webhooks and change tracking. Requires an Entra app registration and a licensed environment.",
+    heritagePays:"$0 to integrate. The Dataverse Web API is included with every Dynamics license, with no separate API SKU.",
+    firmPays:"$65 to $150 per user per month across Sales Professional, Enterprise, and Premium. A 5-user firm on Enterprise pays about $6,300 per year. API access is included.",
+    api:"Dataverse Web API, REST over OData v4, with OAuth 2.0 through Entra ID.",
+    data:"account, contact, lead, opportunity, activities, notes, plus custom tables.",
+    notes:"Lighter than Salesforce on a standard data model, heavier if the firm has customized Dataverse.",
+    srcs:[["Dataverse Web API overview","https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/overview"],["Dynamics 365 Sales pricing","https://www.microsoft.com/en-us/dynamics-365/products/sales/pricing"]]
+  },
+  {
+    name:"Salesforce", cat:"CRM", eff:"High", pts:"5 pts",
+    cost:"Free", heritageShort:"$0 / yr", firm:"High", firmShort:"~$10.5-19.5K/yr",
+    verdict:"The heaviest CRM build, but $0 to integrate privately. The firm's edition includes the API.",
+    buildNote:"Mature REST plus SOAP, Bulk, GraphQL, and Pub/Sub, with OAuth 2.0. The work lies in connected-app setup, SOQL, governor and API limits, and the Financial Services Cloud data model.",
+    heritagePays:"$0 for a private, customer-credentialed integration. Optional fees apply only if Heritage publicly lists a managed app: about $999 per security review for paid apps, about $150 per year for listing, and a 15% revenue share. None of this is required.",
+    firmPays:"Sales Cloud Enterprise at $175 per user per month is about $10,500 per year for 5 users. Financial Services Cloud at about $325 per user per month list is about $19,500 per year and is typically negotiated higher. API access is included on Enterprise and above. Prices reflect the August 2025 increase.",
+    api:"REST plus SOAP, Bulk 2.0, GraphQL, and Pub/Sub CDC, with OAuth 2.0. API access is edition-gated.",
+    data:"Account, Contact, Lead, Opportunity, Activities, Notes. FSC adds Financial Account, Financial Goal, Households.",
+    notes:"CRM data may also be available through an existing Salesforce instance in the Heritage and Ridgeback group, which would avoid a new Financial Services Cloud license, the most expensive CRM line.",
+    srcs:[["Salesforce FSC pricing","https://www.salesforce.com/financial-services/pricing/"],["Salesforce Sales pricing","https://www.salesforce.com/sales/pricing/"]]
+  },
+  {
+    name:"Zocks", cat:"Meeting Intelligence", eff:"Medium", pts:"2 pts",
+    cost:"Negotiated", heritageShort:"Enterprise quote", firm:"Low", firmShort:"~$7K/yr",
+    verdict:"The lowest-barrier meeting-intelligence vendor. Per-seat pricing is public, though the full REST API requires an Enterprise contract.",
+    buildNote:"A REST API suite plus a Zocks MCP server for near-zero-effort AI-tool consumption, alongside prebuilt connectors.",
+    heritagePays:"$0 list for seats, which the firm buys. The full headless REST API requires an Enterprise contract priced on quote, the one point at which Heritage itself may pay.",
+    firmPays:"$67 to $184 per user per month across Essentials, Professional, and Ultimate, plus $25 per month per admin seat. A 5-user firm on Professional pays about $7,020 per year.",
+    api:"A REST API suite plus an MCP server. The full REST API is on the Enterprise tier, contact sales.",
+    data:"Meeting notes and transcripts, extracted client facts, action items, auto-filled forms, email drafts.",
+    notes:"The MCP server is the fastest path to surface meeting intelligence inside Heritage without a full REST build.",
+    srcs:[["Zocks pricing","https://www.zocks.io/pricing"],["Zocks platform","https://www.zocks.io/platform"]]
+  },
+  {
+    name:"eMoney Advisor", cat:"Planning / Aggregation", eff:"Medium", pts:"3 pts",
+    cost:"Negotiated", heritageShort:"$0 or quote", firm:"High", firmShort:"~$15-22K/yr",
+    verdict:"A real REST and OAuth API with a sandbox, but Fidelity-vetted gating and no public price. The best case is $0 if access rides the firm's license.",
+    buildNote:"REST and OAuth with published OpenAPI specs, a sandbox, and webhooks. The technical build is manageable; the gate is partner approval.",
+    heritagePays:"Not published. $0 if read access to the firm's data rides its existing eMoney license, otherwise a negotiated partner fee with no rack rate. Not estimable without a sales conversation.",
+    firmPays:"The emX advisor seat is about $3,000 to $4,500 per year each. A 5-advisor firm pays about $15K to $22K per year, already incurred for planning regardless of Heritage.",
+    api:"REST and OAuth, with a 2025 developer portal, OpenAPI specs, Postman collections, and a sandbox.",
+    data:"Client and advisor records, eMoney Vault documents, aggregated financial accounts, planning projections.",
+    notes:"Confirm whether the firm's license covers Heritage's read access, which is the difference between $0 and a contract.",
+    srcs:[["eMoney developer portal","https://developer.emoneyadvisor.com/"],["emX pricing, Capterra","https://www.capterra.com/p/119135/emX/"]]
+  },
+  {
+    name:"Arch", cat:"Planning / Aggregation", eff:"Medium", pts:"3 pts",
+    cost:"Negotiated", heritageShort:"Contact sales", firm:"High", firmShort:"Quote",
+    verdict:"An API-first alternatives-data platform. Technically light with provider-assisted setup, but fully quote-based with no public anchors.",
+    buildNote:"An API key and secret with HTTP Basic for inbound portfolio sync and file delivery. Setup is provider-assisted, and public documentation is thin.",
+    heritagePays:"Fully undisclosed, with no public partner, setup, or per-account figure. Likely tied to investors, accounts, or documents aggregated. Not estimable.",
+    firmPays:"Quote-based and fully undisclosed. Held by the advisory firm or family office and negotiated by AUM or number of alternative positions. Relevant only if clients hold private assets.",
+    api:"A partner API with key and secret. Already integrated with Addepar, Black Diamond, Salesforce, Bipsync, Envestnet.",
+    data:"K-1 tax documents, capital calls and distributions, fund statements, NAV and valuations, transactions.",
+    notes:"Likely out of scope for a standard bank and brokerage pilot.",
+    srcs:[["Arch, solutions","https://arch.co/solutions.html"],["Arch on the Addepar marketplace","https://integrations.addepar.com/product/arch-alternatives-data"]]
+  },
+  {
+    name:"Carta", cat:"Equity / Real Estate", eff:"High", pts:"4 pts",
+    cost:"Negotiated", heritageShort:"SOC 2 + invite", firm:"Free", firmShort:"$0 *",
+    verdict:"A clean OAuth2 REST API, but invite-only and gated by SOC 2 Type 2. The advisory firm pays nothing; the client's company does.",
+    buildNote:"The Carta Developer Platform uses OAuth2 and REST, with a sandbox available before approval. The Portfolio suite for equity aggregation is the relevant one.",
+    heritagePays:"No published API fee. The real cost is achieving SOC 2 Type 2 certification and securing a partner invitation, both unpublished. Reading data with the client's own authorization may carry no incremental Carta charge.",
+    firmPays:"$0 to the advisory firm. The end client's company pays Carta, about $3,000 to $12,000 per year per company plus about $2,000 to $5,000 per 409A valuation. The firm reads through delegated access.",
+    api:"OAuth2 REST. The partner API is invite-only and requires SOC 2 Type 2. Customers can access their own data on demand.",
+    data:"Cap tables, equity and option grants, vesting schedules, exercises, holdings and valuations, portfolio aggregation.",
+    notes:"A strong fit for capturing private-company equity in estate plans. The SOC 2 Type 2 requirement is the gating item.",
+    srcs:[["Carta API platform","https://carta.com/api/"],["Carta plans and pricing","https://carta.com/plans/pricing-for-companies/"]]
+  },
+  {
+    name:"Addepar", cat:"Portfolio Reporting", eff:"High", pts:"4 pts",
+    cost:"Negotiated", heritageShort:"$0-30K / yr", firm:"High", firmShort:"~$50-65K/yr",
+    verdict:"Public REST and OAuth documentation, but the most gated program and by far the most expensive for clients to license.",
+    buildNote:"REST with OAuth 2.0 and an API key on a public portal. Requires an active Addepar subscription and admission to a curated partner program.",
+    heritagePays:"About $0 to $30K per year, pending the partnerships team. Most likely $0, since data access piggybacks on the firm's subscription. No partner or API fee is published, and of the four reporting vendors Addepar is the most likely to attach a modest annual partner fee. This is an annual range, not monthly.",
+    firmPays:"About 1.2 to 1.5 basis points of AUM with a minimum near $50K per year. A small firm at $250M AUM pays about $50K to $65K per year, as the minimum dominates. Frequently cited at 2 to 3 times the cost of competitors, and the most expensive to adopt.",
+    api:"REST, with OAuth 2.0 and an API key. Public developer portal.",
+    data:"Portfolios, positions, holdings, transactions, entities and ownership, performance, benchmarks, billing.",
+    notes:"Worth pursuing through a warm introduction to the partnerships team, since the relationship determines whether the program opens. Relevant mainly to clients already on Addepar.",
+    srcs:[["Addepar developer docs","https://developers.addepar.com/docs/welcome"],["Addepar pricing, Contrary Research","https://research.contrary.com/company/addepar"]]
+  },
+  {
+    name:"Jump", cat:"Meeting Intelligence", eff:"High", pts:"3.5 pts",
+    cost:"Negotiated", heritageShort:"Partnership", firm:"Low", firmShort:"~$5-6K/yr",
+    verdict:"No self-serve API; access is partnership-gated. Budget business development rather than a price list.",
+    buildNote:"No public API exposes notes or transcripts. All integrations are Jump-built, so access requires becoming a named partner. A partner endpoint under NDA would likely reduce the build to Low or Medium.",
+    heritagePays:"Not published. There is no posted API fee, and a platform integration is negotiated through business development, likely at $0 list or revenue share. No figure can be stated without contacting Jump.",
+    firmPays:"$100 per advisor per month on the public Meet tier ($75 ramping). A 5-advisor firm pays about $4,500 to $6,000 per year. Higher tiers are quote-based.",
+    api:"No self-serve or public API. Jump-controlled connectors only.",
+    data:"If partnered: structured meeting notes, transcripts, action items, recap emails, extracted financial data.",
+    notes:"Jump already runs a two-way estate-planning data flow with Wealth.com, so a partner path exists.",
+    srcs:[["Jump pricing","https://jump.ai/pricing"],["Jump and Wealth.com integration","https://jump.ai/press/wealthcom-integration"]]
+  },
+  {
+    name:"Charles Schwab", cat:"Custodian / Brokerage", eff:"High", pts:"5 pts",
+    cost:"Free", heritageShort:"$0 / yr", firm:"Free", firmShort:"$0 *",
+    verdict:"Two paths: a free retail Trader API, and the gated Advisor and RIA custody-data path this use case requires. Neither charges the platform or adds a firm fee.",
+    buildNote:"The advisor path runs through Schwab OpenView Gateway and Daily Data Files under a gated partner agreement, where the approval timeline dominates the effort. The retail Trader API uses REST and OAuth separately.",
+    heritagePays:"$0 published. The Trader API is free, and Advisor Services data is relationship-gated through an unpriced integration agreement rather than a list fee.",
+    firmPays:"$0 incremental for the API data, which rides the firm's existing Schwab custody relationship. Custody account minimums and transaction fees apply separately and are not an API charge.",
+    api:"Schwab OpenView Gateway plus Daily Data Files for advisor data, and a separate retail Trader API on REST and OAuth.",
+    data:"Custody data: accounts, balances, positions, transactions, and account opening on the broader surface.",
+    notes:"TD Ameritrade APIs were retired in May 2024 and old apps are not portable. Data exists only for Schwab-custodied accounts.",
+    srcs:[["Schwab Advisor Services, API integration","https://advisorservices.schwab.com/managing-your-business/tech-integration/api-integration"],["Schwab developer portal","https://developer.schwab.com/"]]
+  },
+  {
+    name:"Goldman Sachs Custody", cat:"Custodian / Brokerage", eff:"High", pts:"5 pts",
+    cost:"Free", heritageShort:"$0 / yr", firm:"Free", firmShort:"$0 *",
+    verdict:"The highest access barrier among the custodians, gated by an enterprise relationship, but with no list-priced platform fee and no firm API charge.",
+    buildNote:"REST APIs with OAuth 2.0. After app approval, credentials are issued manually through Lockbox or secure email. The effort is the approval workflow and institutional onboarding.",
+    heritagePays:"$0 published. Access is relationship-gated through the GSCS integrations team rather than a list fee.",
+    firmPays:"$0 incremental for the API data, which rides the firm's existing Goldman custody relationship. Custody and clearing economics apply separately.",
+    api:"REST, with OAuth 2.0. Credentials issued via Lockbox or secure email after approval.",
+    data:"Accounts, cash transactions (ACH and wire), external bank-account linking, onboarding, plus positions and balances on the platform.",
+    notes:"A curated partner ecosystem of about 42 integrations. Standard OAuth, with the cost concentrated in institutional onboarding.",
+    srcs:[["GS RIA Custody developer docs","https://developer.gs.com/docs/services/ria-custody"],["GS Custody Solutions","https://custodysolutions.gs.com/"]]
+  },
+  {
+    name:"Yodlee", cat:"Planning / Aggregation", eff:"High", pts:"4 pts",
+    cost:"Recurring", heritageShort:"~$12-40K / yr", firm:"Free", firmShort:"$0",
+    verdict:"The one significant recurring fee. A real per-account aggregation cost paid by Heritage directly, dominated by an annual minimum.",
+    buildNote:"REST v1.1 with token-based auth and a free self-serve sandbox; production requires a commercial agreement. The code is straightforward, but per-account billing and connection-error remediation are ongoing.",
+    heritagePays:"Heritage holds the contract and pays the bill, about $12K to $40K per year at pilot scale. This covers a base near $1,000 to $2,000 per month, about $1 to $2 per user per month, and per-verification fees, against an annual minimum of about $6K to $25K or more that dominates at a few hundred accounts. The cost scales with users.",
+    firmPays:"$0. Heritage holds the Yodlee contract and absorbs the cost, typically recovered through its own pricing. The firm is not billed.",
+    api:"REST v1.1, with client-credentials OAuth. Self-serve sandbox; paid production tiers plus an annual minimum.",
+    data:"Accounts, transactions, holdings and investments, statements, documents, net-worth and spending data.",
+    notes:"Budget to the annual minimum rather than per-account math. Roughly 2 to 4 times the entry cost of Plaid.",
+    srcs:[["Yodlee Account Aggregation API","https://developer.yodlee.com/products/Account_Aggregation_API"],["Plaid versus Yodlee pricing","https://www.getmonetizely.com/articles/plaid-vs-yodlee-how-much-will-financial-data-apis-cost-your-fintech"]]
+  },
+  {
+    name:"Zillow to AVM", cat:"Equity / Real Estate", eff:"Medium", pts:"3 pts",
+    cost:"Recurring", heritageShort:"~$0.5-4K / yr", firm:"Free", firmShort:"$0",
+    verdict:"Zillow's API is retired, so the realistic path is a paid AVM that Heritage funds directly, at modest cost.",
+    buildNote:"Zillow's public API was retired in 2021 and the Zestimate is not licensable through the standard feed. The build targets ATTOM or HouseCanary instead, a straightforward Medium effort.",
+    heritagePays:"Platform-funded and modest. ATTOM Property Navigator is about $499 per year flat for up to 2,400 reports, or HouseCanary Pro at $790 per year plus $7 to $10 per report (or $0.30 to $0.50 per API call). Pilot cost is about $500 to $4,000 per year. The ATTOM API and CoreLogic are quote-based.",
+    firmPays:"$0. Property data is a Heritage-funded platform cost, which Heritage may recover through its own pricing. The firm is not billed.",
+    api:"Third-party AVM REST APIs (ATTOM, HouseCanary, CoreLogic). Bridge Interactive is MLS-gated and excludes the Zestimate.",
+    data:"Property value estimates (AVM), property characteristics, tax and deed records, comparables.",
+    notes:"This is an access question rather than a coding one, resolved by paying an AVM vendor. The Zillow brand itself is closed to a non-MLS platform.",
+    srcs:[["ATTOM Property Navigator pricing","https://www.attomdata.com/solutions/property-navigator/pricing/"],["HouseCanary pricing","https://www.housecanary.com/pricing"]]
+  }
+];
+
+TOOLS.sort((a,b)=>a.name.localeCompare(b.name,undefined,{sensitivity:'base'}));
+
+const grid = document.getElementById('grid');
+const catChips = document.getElementById('catChips');
+const countEl = document.getElementById('count');
+let activeCat="all", activeEff="all", activeCost="all", activeFirm="all";
+
+const cats = ["all", ...Object.keys(VIZ)];
+cats.forEach((c,i)=>{
+  const b=document.createElement('button');
+  b.className="chip"+(i===0?" active":""); b.dataset.cat=c;
+  b.textContent = c==="all"?"All":c;
+  catChips.appendChild(b);
+});
+
+function effBadge(e){const m={Low:"b-low",Medium:"b-med",High:"b-high"};return `<span class="badge ${m[e]}">${e}</span>`;}
+function costBadge(c){const m={Free:"b-free",Recurring:"b-rec",Negotiated:"b-neg"};return `<span class="badge ${m[c]}">${c}</span>`;}
+function firmBadge(f){const m={Free:"b-low",Low:"b-med",High:"b-high"};const lbl={Free:"$0",Low:"<$10K",High:"$10K+"};return `<span class="badge ${m[f]}">${lbl[f]}</span>`;}
+
+function render(){
+  grid.innerHTML="";
+  let n=0;
+  TOOLS.forEach((t,idx)=>{
+    if(activeCat!=="all" && t.cat!==activeCat) return;
+    if(activeEff!=="all" && t.eff!==activeEff) return;
+    if(activeCost!=="all" && t.cost!==activeCost) return;
+    if(activeFirm!=="all" && t.firm!==activeFirm) return;
+    n++;
+    const v=VIZ[t.cat];
+    const el=document.createElement('div');
+    el.className="tool";
+    el.innerHTML=`
+      <div class="head">
+        <span class="name">${t.name}</span>
+        <span class="cat-tag" style="background:${v.tint};color:${v.fg}">${t.cat}</span>
+      </div>
+      <p class="desc">${t.verdict}</p>
+      <div class="costblock">
+        <div class="cost-row"><span class="lbl"><span class="dot int"></span> Supernal</span><span class="right">${effBadge(t.eff)}<span class="v">${t.pts}</span></span></div>
+        <div class="cost-row"><span class="lbl"><span class="dot ext"></span> Heritage</span><span class="right">${costBadge(t.cost)}<span class="v">${t.heritageShort}</span></span></div>
+        <div class="cost-row"><span class="lbl"><span class="dot firm"></span> Client firm</span><span class="right">${firmBadge(t.firm)}<span class="v">${t.firmShort}</span></span></div>
+      </div>`;
+    el.onclick=()=>openModal(idx);
+    grid.appendChild(el);
+  });
+  countEl.textContent=n;
+  if(!n){grid.innerHTML='<p class="meta" style="grid-column:1/-1">No integrations match this filter.</p>';}
+}
+
+function openModal(idx){
+  const t=TOOLS[idx]; const v=VIZ[t.cat];
+  const srcLinks=t.srcs.map(s=>`<span class="src"><a href="${s[1]}" target="_blank" rel="noopener">${s[0]} ↗</a></span>`).join("");
+  document.getElementById('modal').innerHTML=`
+    <div class="mhead">
+      <div>
+        <span class="cat-tag" style="background:${v.tint};color:${v.fg}">${t.cat}</span>
+        <h3 style="margin-top:10px">${t.name}</h3>
+      </div>
+      <button class="closeb" onclick="closeModal()" aria-label="Close">×</button>
+    </div>
+    <p style="color:var(--muted-fg);margin-top:4px">${t.verdict}</p>
+    <div class="costcards">
+      <div class="ccard int">
+        <div class="lab"><span class="dot int"></span> Supernal build</div>
+        <div class="who">one-time</div>
+        <div class="val">${effBadge(t.eff)} <span class="mono" style="font-size:13px">${t.pts}</span></div>
+        <div class="sub">${t.buildNote}</div>
+      </div>
+      <div class="ccard ext">
+        <div class="lab"><span class="dot ext"></span> Heritage pays vendor</div>
+        <div class="who">recurring / yr</div>
+        <div class="val">${costBadge(t.cost)}<br><span class="mono" style="font-size:13px">${t.heritageShort}</span></div>
+        <div class="sub">${t.heritagePays}</div>
+      </div>
+      <div class="ccard firm">
+        <div class="lab"><span class="dot firm"></span> Client firm license</div>
+        <div class="who">small firm / yr</div>
+        <div class="val">${firmBadge(t.firm)}<br><span class="mono" style="font-size:13px">${t.firmShort}</span></div>
+        <div class="sub">${t.firmPays}</div>
+      </div>
+    </div>
+    <div class="drow"><div class="dk">API and auth</div><div class="dv">${t.api}</div></div>
+    <div class="drow"><div class="dk">Key data</div><div class="dv">${t.data}</div></div>
+    <div class="drow"><div class="dk">Notes</div><div class="dv">${t.notes}</div></div>
+    <div class="drow"><div class="dk">Sources</div><div class="dv">${srcLinks}</div></div>`;
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('open');}
+document.getElementById('overlay').onclick=(e)=>{if(e.target.id==='overlay')closeModal();};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+function bind(id,attr,setter){
+  document.getElementById(id).addEventListener('click',(e)=>{
+    const btn=e.target.closest('.chip'); if(!btn)return;
+    [...e.currentTarget.children].forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active'); setter(btn.dataset[attr]); render();
+  });
+}
+bind('catChips','cat',v=>activeCat=v);
+bind('effChips','eff',v=>activeEff=v);
+bind('costChips','cost',v=>activeCost=v);
+bind('firmChips','firm',v=>activeFirm=v);
+
+// scrollspy for nav
+const navLinks=[...document.querySelectorAll('.nav__links a')];
+const secs=navLinks.map(a=>document.querySelector(a.getAttribute('href')));
+const spy=new IntersectionObserver((entries)=>{
+  entries.forEach(en=>{
+    if(en.isIntersecting){
+      const id='#'+en.target.id;
+      navLinks.forEach(a=>a.classList.toggle('current',a.getAttribute('href')===id));
+    }
+  });
+},{rootMargin:'-45% 0px -50% 0px'});
+secs.forEach(s=>s&&spy.observe(s));
+
+render();
+</script>
+</body>
+</html>
