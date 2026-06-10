@@ -428,7 +428,7 @@ const TOOLS = [
     firmPays:"$0. End users sign in with an existing Google account at no cost.",
     api:"OAuth 2.0 and OpenID Connect, via Supabase's built-in Google provider.",
     data:"User identity: email, profile, openid. No financial data.",
-    notes:"Keep the integration to basic profile scopes. Restricted scopes such as Gmail or Drive content trigger a $15K to $75K annual security assessment and are not required for login.",
+    notes:"Login uses basic profile scopes only, with no Google fee.",
     srcs:[["Supabase, Login with Google","https://supabase.com/docs/guides/auth/social-login/auth-google"],["Google, Identity Platform pricing","https://cloud.google.com/identity-platform/pricing"]]
   },
   {
@@ -476,7 +476,7 @@ const TOOLS = [
     firmPays:"$39 per user per month on Launch (up to 5 users) to $59 on Growth. A 5-user firm pays about $2,340 to $3,540 per year. API access is included.",
     api:"REST, with HTTP Basic authentication. Owned by Orion.",
     data:"Contacts, activities (tasks, calls, meetings), notes (append-only), accounts.",
-    notes:"Legacy Basic authentication is a security-design consideration rather than heavy engineering.",
+    notes:"Uses an older authentication style; routine to handle.",
     srcs:[["Redtail API documentation","https://support.redtailtechnology.com/s/topic/0TO4u000000sQrhGAE/api-documentation"],["Redtail pricing","https://redtailtechnology.com/crm"]]
   },
   {
@@ -512,7 +512,7 @@ const TOOLS = [
     firmPays:"About 1 basis point of AUM, roughly $100K per year per $1B. A small firm at $250M AUM pays about $20K to $25K per year, with an undisclosed minimum. Cheaper per AUM than Addepar.",
     api:"REST, with an OAuth 2.0 password grant plus a subscription key. Batch API and SSO.",
     data:"Reconciled accounts and holdings, transactions, cost basis, performance and risk, household info, alternatives, insurance policy detail.",
-    notes:"Authentication is bespoke, using a password grant, subscription key, and frequent refresh. The gating and questionnaire extend time to launch.",
+    notes:"Onboarding includes a partner approval questionnaire, which extends time to launch.",
     srcs:[["Black Diamond auth, password flow","https://www.blackdiamondwealthplatform.com/authentication_password_flow"],["Black Diamond pricing, andsimple","https://andsimple.co/companies/black-diamond/"]]
   },
   {
@@ -620,7 +620,7 @@ const TOOLS = [
     firmPays:"$0 incremental for the API data, which rides the firm's existing Schwab custody relationship. Custody account minimums and transaction fees apply separately and are not an API charge.",
     api:"Schwab OpenView Gateway plus Daily Data Files for advisor data, and a separate retail Trader API on REST and OAuth.",
     data:"Custody data: accounts, balances, positions, transactions, and account opening on the broader surface.",
-    notes:"TD Ameritrade APIs were retired in May 2024 and old apps are not portable. Data exists only for Schwab-custodied accounts.",
+    notes:"Data exists only for Schwab-custodied accounts.",
     srcs:[["Schwab Advisor Services, API integration","https://advisorservices.schwab.com/managing-your-business/tech-integration/api-integration"],["Schwab developer portal","https://developer.schwab.com/"]]
   },
   {
@@ -644,7 +644,7 @@ const TOOLS = [
     firmPays:"$0. Heritage holds the Yodlee contract and absorbs the cost, typically recovered through its own pricing. The firm is not billed.",
     api:"REST v1.1, with client-credentials OAuth. Self-serve sandbox; paid production tiers plus an annual minimum.",
     data:"Accounts, transactions, holdings and investments, statements, documents, net-worth and spending data.",
-    notes:"Budget to the annual minimum rather than per-account math. Roughly 2 to 4 times the entry cost of Plaid.",
+    notes:"Budget to the annual minimum rather than per-account math.",
     srcs:[["Yodlee Account Aggregation API","https://developer.yodlee.com/products/Account_Aggregation_API"],["Plaid versus Yodlee pricing","https://www.getmonetizely.com/articles/plaid-vs-yodlee-how-much-will-financial-data-apis-cost-your-fintech"]]
   },
   {
@@ -656,7 +656,7 @@ const TOOLS = [
     firmPays:"$0. Property data is a Heritage-funded platform cost, which Heritage may recover through its own pricing. The firm is not billed.",
     api:"Third-party AVM REST APIs (ATTOM, HouseCanary, CoreLogic). Bridge Interactive is MLS-gated and excludes the Zestimate.",
     data:"Property value estimates (AVM), property characteristics, tax and deed records, comparables.",
-    notes:"This is an access question rather than a coding one, resolved by paying an AVM vendor. The Zillow brand itself is closed to a non-MLS platform.",
+    notes:"An access question rather than a coding one, resolved by paying an AVM vendor.",
     srcs:[["ATTOM Property Navigator pricing","https://www.attomdata.com/solutions/property-navigator/pricing/"],["HouseCanary pricing","https://www.housecanary.com/pricing"]]
   }
 ];
