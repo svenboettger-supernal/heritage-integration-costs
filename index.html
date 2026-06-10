@@ -242,15 +242,15 @@
   <section class="section" id="summary">
     <p class="eyebrow">Executive Summary</p>
     <h2>Three payers, three distinct costs</h2>
-    <p class="intro">Heritage AI carries the first two: roughly 74 build points one-time for all 20 connectors, plus $13K to $44K per year in vendor fees. Client-firm licenses stay with the firms.</p>
+    <p class="intro">Heritage AI carries the first two: roughly 72 build points one-time for all 20 connectors, plus $13K to $44K per year in vendor fees. Client-firm licenses stay with the firms.</p>
 
     <div class="dims">
       <div class="dim int">
         <div class="k"><span class="dot int"></span> 01 · Supernal</div>
         <p class="who">One-time build, paid by Heritage to Supernal</p>
         <h3>Build effort</h3>
-        <div class="big mono">~74 pts</div>
-        <p class="d">Roughly 74 points one-time for all 20 connectors. Initial estimates, refined at scoping.</p>
+        <div class="big mono">~72 pts</div>
+        <p class="d">Roughly 72 points one-time for all 20 connectors. Initial estimates, refined at scoping.</p>
       </div>
       <div class="dim ext">
         <div class="k"><span class="dot ext"></span> 02 · Heritage AI</div>
@@ -337,13 +337,13 @@
         <tr>
           <td><strong>3 · Gated and data-vendor</strong></td>
           <td>Addepar, Schwab, Goldman, Salesforce, Dynamics, Carta, Jump, Yodlee, Zillow to AVM</td>
-          <td class="num-cell">~44 pts</td>
+          <td class="num-cell">~42 pts</td>
           <td class="num-cell">~$13-44K<br><span class="meta">Yodlee $12-40K, AVM $0.5-4K</span></td>
         </tr>
         <tr class="totrow">
           <td>All 20</td>
           <td>Full Wealth.com parity</td>
-          <td class="num-cell">~74 pts one-time</td>
+          <td class="num-cell">~72 pts one-time</td>
           <td class="num-cell">~$13-44K / yr<br>plus negotiated terms</td>
         </tr>
       </tbody>
@@ -386,7 +386,7 @@
         <ul class="tight">
           <li><strong>Addepar</strong>: most likely $0, with a modest annual partner fee of about $10K to $30K as the downside. Pursue through a warm introduction to the partnerships team.</li>
           <li><strong>eMoney</strong>: $0 if read access rides the firm's license, otherwise a negotiated partner fee.</li>
-          <li><strong>Carta</strong>: no API fee, but requires SOC 2 Type 2 and an invitation. The cost is compliance, not a license.</li>
+          <li><strong>Carta</strong>: no API fee. Requires SOC 2 Type 2, which the platform already meets, plus a partner invitation.</li>
           <li><strong>Zocks</strong>: the full REST API requires an Enterprise contract, priced on quote.</li>
           <li><strong>Jump</strong>: no self-serve API; a partnership is negotiated through business development, likely at $0 list.</li>
           <li><strong>Arch</strong>: fully quote-based, relevant only if clients hold private or alternative assets.</li>
@@ -576,15 +576,15 @@ const TOOLS = [
     srcs:[["Arch, solutions","https://arch.co/solutions.html"],["Arch on the Addepar marketplace","https://integrations.addepar.com/product/arch-alternatives-data"]]
   },
   {
-    name:"Carta", cat:"Equity / Real Estate", eff:"High", pts:"6 pts",
-    cost:"Negotiated", heritageShort:"SOC 2 + invite", firm:"Free", firmShort:"$0 *",
-    verdict:"A clean OAuth2 REST API, but invite-only and gated by SOC 2 Type 2. The advisory firm pays nothing; the client's company does.",
+    name:"Carta", cat:"Equity / Real Estate", eff:"High", pts:"4 pts",
+    cost:"Negotiated", heritageShort:"Invite-only", firm:"Free", firmShort:"$0 *",
+    verdict:"A clean OAuth2 REST API, invite-only. The SOC 2 Type 2 requirement is already met by the platform. The advisory firm pays nothing; the client's company does.",
     buildNote:"The Carta Developer Platform uses OAuth2 and REST, with a sandbox available before approval. The Portfolio suite for equity aggregation is the relevant one.",
-    heritagePays:"No published API fee. The real cost is achieving SOC 2 Type 2 certification and securing a partner invitation, both unpublished. Reading data with the client's own authorization may carry no incremental Carta charge.",
+    heritagePays:"No published API fee. The platform already meets Carta's SOC 2 Type 2 requirement, so the remaining gate is securing a partner invitation. Reading data with the client's own authorization may carry no incremental Carta charge.",
     firmPays:"$0 to the advisory firm. The end client's company pays Carta, about $3,000 to $12,000 per year per company plus about $2,000 to $5,000 per 409A valuation. The firm reads through delegated access.",
-    api:"OAuth2 REST. The partner API is invite-only and requires SOC 2 Type 2. Customers can access their own data on demand.",
+    api:"OAuth2 REST. The partner API is invite-only and requires SOC 2 Type 2, which the platform already meets. Customers can access their own data on demand.",
     data:"Cap tables, equity and option grants, vesting schedules, exercises, holdings and valuations, portfolio aggregation.",
-    notes:"A strong fit for capturing private-company equity in estate plans. The SOC 2 Type 2 requirement is the gating item.",
+    notes:"A strong fit for capturing private-company equity in estate plans. With SOC 2 already in place, the partner invitation is the gating item.",
     srcs:[["Carta API platform","https://carta.com/api/"],["Carta plans and pricing","https://carta.com/plans/pricing-for-companies/"]]
   },
   {
